@@ -43,10 +43,10 @@
     "test": "bun test",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "package": "npm run build && npm pack",
-    "docs:dev": "npm run dev -w website",
-    "docs:build": "npm run build -w website",
-    "docs:preview": "npm run preview -w website"
+    "package": "bun run build && bun pm pack",
+    "docs:dev": "bun run --filter gh-actions-lockfile-website dev",
+    "docs:build": "bun run --filter gh-actions-lockfile-website build",
+    "docs:preview": "bun run --filter gh-actions-lockfile-website preview"
   },
   "dependencies": {
     "commander": "^14.0.2",

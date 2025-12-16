@@ -22,11 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Node
+      - name: Set up Bun
         uses: gjtorikian/actions/setup-languages/bun@main
-
-      - name: Build packages
-        run: bun run build
 
       - name: Build website
         run: bun run docs:build
