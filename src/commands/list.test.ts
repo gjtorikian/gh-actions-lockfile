@@ -40,18 +40,22 @@ describe("list command", () => {
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
-            "actions/setup-node": {
-              version: "v4",
-              sha: "60edb5dd545a775178f52524783378180af0d1f8",
-              integrity: "sha256-xyz789",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+                integrity: "sha256-abc123",
+                dependencies: [],
+              },
+            ],
+            "actions/setup-node": [
+              {
+                version: "v4",
+                sha: "60edb5dd545a775178f52524783378180af0d1f8",
+                integrity: "sha256-xyz789",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -89,24 +93,28 @@ describe("list command", () => {
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "owner/composite-action": {
-              version: "v1",
-              sha: "1111111111111111111111111111111111111111",
-              integrity: "sha256-composite",
-              dependencies: [
-                {
-                  ref: "actions/checkout@v4",
-                  sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-                  integrity: "sha256-abc123",
-                },
-              ],
-            },
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
+            "owner/composite-action": [
+              {
+                version: "v1",
+                sha: "1111111111111111111111111111111111111111",
+                integrity: "sha256-composite",
+                dependencies: [
+                  {
+                    ref: "actions/checkout@v4",
+                    sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+                    integrity: "sha256-abc123",
+                  },
+                ],
+              },
+            ],
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+                integrity: "sha256-abc123",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -144,24 +152,28 @@ describe("list command", () => {
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "owner/composite": {
-              version: "v1",
-              sha: "1111111111111111111111111111111111111111",
-              integrity: "sha256-comp",
-              dependencies: [
-                {
-                  ref: "actions/checkout@v4",
-                  sha: "abc123",
-                  integrity: "sha256-abc",
-                },
-              ],
-            },
-            "actions/checkout": {
-              version: "v4",
-              sha: "abc123def456abc123def456abc123def456abc1",
-              integrity: "sha256-abc",
-              dependencies: [],
-            },
+            "owner/composite": [
+              {
+                version: "v1",
+                sha: "1111111111111111111111111111111111111111",
+                integrity: "sha256-comp",
+                dependencies: [
+                  {
+                    ref: "actions/checkout@v4",
+                    sha: "abc123",
+                    integrity: "sha256-abc",
+                  },
+                ],
+              },
+            ],
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "abc123def456abc123def456abc123def456abc1",
+                integrity: "sha256-abc",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -194,12 +206,14 @@ describe("list command", () => {
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha,
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha,
+                integrity: "sha256-abc123",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -258,5 +272,52 @@ describe("list command", () => {
 
     // Should print header but no actions
     expect(consoleLogs.some((log) => log.includes("actions.lock.json"))).toBe(true);
+  });
+
+  test("displays multiple versions of the same action", async () => {
+    const testDir = join(tempDir, "multi-version");
+    const workflowDir = join(testDir, ".github", "workflows");
+    await mkdir(workflowDir, { recursive: true });
+
+    await writeFile(
+      join(workflowDir, "actions.lock.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          generated: "2024-01-15T10:30:00.000Z",
+          actions: {
+            "actions/checkout": [
+              {
+                version: "v3",
+                sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                integrity: "sha256-v3hash",
+                dependencies: [],
+              },
+              {
+                version: "v4",
+                sha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                integrity: "sha256-v4hash",
+                dependencies: [],
+              },
+            ],
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    await list({
+      workflows: workflowDir,
+      output: join(workflowDir, "actions.lock.json"),
+    });
+
+    // Should display both versions
+    expect(
+      consoleLogs.some((log) => log.includes("actions/checkout@v3"))
+    ).toBe(true);
+    expect(
+      consoleLogs.some((log) => log.includes("actions/checkout@v4"))
+    ).toBe(true);
   });
 });

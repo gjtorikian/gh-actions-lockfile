@@ -37,11 +37,11 @@ export class Resolver {
 
     const actionKey = getFullName(ref);
 
-    // Skip if already resolved
-    if (this.visited.has(actionKey)) {
+    // Skip if already resolved (use rawUses to track name+version)
+    if (this.visited.has(ref.rawUses)) {
       return;
     }
-    this.visited.add(actionKey);
+    this.visited.add(ref.rawUses);
 
     console.log(`Resolving ${actionKey}@${ref.ref}...`);
 
@@ -71,9 +71,9 @@ export class Resolver {
       // Recursively resolve the dependency
       await this.resolveAction(depRef, lockfile, depth + 1);
 
-      // Get the resolved SHA from lockfile
+      // Get the resolved SHA from lockfile (find by version in array)
       const depKey = getFullName(depRef);
-      const resolvedDep = lockfile.actions[depKey];
+      const resolvedDep = lockfile.actions[depKey]?.find(a => a.version === depRef.ref);
 
       if (resolvedDep) {
         const dependency: LockedDependency = {
@@ -85,7 +85,10 @@ export class Resolver {
       }
     }
 
-    lockfile.actions[actionKey] = action;
+    if (!lockfile.actions[actionKey]) {
+      lockfile.actions[actionKey] = [];
+    }
+    lockfile.actions[actionKey].push(action);
     console.log(`  Resolved to ${sha.slice(0, 12)}`);
   }
 

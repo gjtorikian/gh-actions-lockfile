@@ -60,12 +60,14 @@ jobs:
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+                integrity: "sha256-abc123",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -109,12 +111,14 @@ jobs:
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+                integrity: "sha256-abc123",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -189,12 +193,14 @@ jobs:
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "abc123",
-              integrity: "sha256-xyz",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "abc123",
+                integrity: "sha256-xyz",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,
@@ -240,18 +246,22 @@ jobs:
           version: 1,
           generated: "2024-01-15T10:30:00.000Z",
           actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "abc123",
-              integrity: "sha256-xyz",
-              dependencies: [],
-            },
-            "actions/setup-node": {
-              version: "v4",
-              sha: "def456",
-              integrity: "sha256-abc",
-              dependencies: [],
-            },
+            "actions/checkout": [
+              {
+                version: "v4",
+                sha: "abc123",
+                integrity: "sha256-xyz",
+                dependencies: [],
+              },
+            ],
+            "actions/setup-node": [
+              {
+                version: "v4",
+                sha: "def456",
+                integrity: "sha256-abc",
+                dependencies: [],
+              },
+            ],
           },
         },
         null,

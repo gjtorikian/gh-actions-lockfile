@@ -21,13 +21,15 @@ export async function list(options: ListOptions): Promise<void> {
 
   const lockfile = await readLockfile(lockfilePath);
 
-  // Build set of transitive deps to identify top-level
+  // Build set of transitive deps to identify top-level (as "name@version")
   const transitiveDeps = new Set<string>();
-  for (const action of Object.values(lockfile.actions)) {
-    for (const dep of action.dependencies) {
-      const depRef = parseActionRef(dep.ref);
-      if (depRef) {
-        transitiveDeps.add(getFullName(depRef));
+  for (const versions of Object.values(lockfile.actions)) {
+    for (const action of versions) {
+      for (const dep of action.dependencies) {
+        const depRef = parseActionRef(dep.ref);
+        if (depRef) {
+          transitiveDeps.add(`${getFullName(depRef)}@${depRef.ref}`);
+        }
       }
     }
   }
@@ -37,13 +39,20 @@ export async function list(options: ListOptions): Promise<void> {
   console.log(`actions.lock.json (generated ${generated.toISOString().replace("T", " ").slice(0, 19)})`);
   console.log();
 
-  // Print tree
-  const topLevelActions = Object.entries(lockfile.actions).filter(
-    ([name]) => !transitiveDeps.has(name)
-  );
+  // Collect top-level actions (not transitive deps)
+  const topLevelActions: Array<{ name: string; action: LockedAction }> = [];
+  for (const [name, versions] of Object.entries(lockfile.actions)) {
+    for (const action of versions) {
+      const key = `${name}@${action.version}`;
+      if (!transitiveDeps.has(key)) {
+        topLevelActions.push({ name, action });
+      }
+    }
+  }
 
+  // Print tree
   for (let i = 0; i < topLevelActions.length; i++) {
-    const [name, action] = topLevelActions[i]!;
+    const { name, action } = topLevelActions[i]!;
     const isLast = i === topLevelActions.length - 1;
     printAction(name, action, lockfile, "", isLast);
   }
@@ -68,7 +77,8 @@ function printAction(
     if (!depRef) continue;
 
     const depName = getFullName(depRef);
-    const depAction = lockfile.actions[depName];
+    // Find the specific version in the array
+    const depAction = lockfile.actions[depName]?.find(a => a.version === depRef.ref);
     if (!depAction) continue;
 
     const isLast = i === action.dependencies.length - 1;

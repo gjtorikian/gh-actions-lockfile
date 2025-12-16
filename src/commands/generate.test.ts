@@ -110,7 +110,7 @@ jobs:
 
     expect(lockfile.version).toBe(1);
     expect(lockfile.actions["actions/checkout"]).toBeDefined();
-    expect(lockfile.actions["actions/checkout"].version).toBe("v4");
+    expect(lockfile.actions["actions/checkout"][0].version).toBe("v4");
   });
 
   test("throws if no workflow files found", async () => {
@@ -234,5 +234,48 @@ jobs:
     const lockfile = JSON.parse(content);
 
     expect(lockfile.version).toBe(1);
+  });
+
+  test("handles multiple versions of the same action", async () => {
+    // Create workflow with two different versions of the same action
+    const workflowDir = join(tempDir, "multi-version", ".github", "workflows");
+    await mkdir(workflowDir, { recursive: true });
+
+    await writeFile(
+      join(workflowDir, "ci.yml"),
+      `name: CI
+on: push
+jobs:
+  build-v3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+  build-v4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+`
+    );
+
+    const outputPath = join(workflowDir, "actions.lock.json");
+
+    await generate({
+      workflows: workflowDir,
+      output: outputPath,
+      token: "test-token",
+    });
+
+    const content = await readFile(outputPath, "utf-8");
+    const lockfile = JSON.parse(content);
+
+    // Should have both versions of the same action in an array
+    expect(lockfile.actions["actions/checkout"]).toBeDefined();
+    expect(lockfile.actions["actions/checkout"]).toHaveLength(2);
+
+    const versions = lockfile.actions["actions/checkout"].map(
+      (a: { version: string }) => a.version
+    );
+    expect(versions).toContain("v3");
+    expect(versions).toContain("v4");
   });
 });

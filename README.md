@@ -212,7 +212,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
   "version": 1,
   "generated": "2025-12-15T20:37:39.422Z",
   "actions": {
-    "actions/checkout": {
+    "actions/checkout": [
       "version": "v4",
       // This is the Git commit SHA (the 40-character hex hash).
       // It identifies the exact commit in the action's repository that will be checked out.
@@ -223,7 +223,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
       "integrity": "sha256-abc123...",
       // This tracks transitive dependencies — other GitHub Actions that a composite action uses internally.
       "dependencies": []
-    }
+    ]
   }
 }
 ```

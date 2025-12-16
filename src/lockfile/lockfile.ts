@@ -33,42 +33,42 @@ export function verify(workflows: Workflow[], lockfile: Lockfile): VerifyResult 
   };
 
   const refs = extractActionRefs(workflows);
-  const workflowActions = new Map<string, string>();
+  // Track workflow actions as name -> Set of versions (to support multiple versions)
+  const workflowActions = new Map<string, Set<string>>();
 
   for (const ref of refs) {
-    workflowActions.set(getFullName(ref), ref.ref);
+    const name = getFullName(ref);
+    if (!workflowActions.has(name)) {
+      workflowActions.set(name, new Set());
+    }
+    workflowActions.get(name)!.add(ref.ref);
   }
 
   // Check for new or changed actions
-  for (const [name, version] of workflowActions) {
-    const locked = lockfile.actions[name];
+  for (const [name, versions] of workflowActions) {
+    const lockedVersions = lockfile.actions[name] || [];
 
-    if (!locked) {
-      result.newActions.push({
-        action: name,
-        newVersion: version,
-      });
-      result.match = false;
-      continue;
-    }
+    for (const version of versions) {
+      const locked = lockedVersions.find(a => a.version === version);
 
-    if (locked.version !== version) {
-      result.changed.push({
-        action: name,
-        oldVersion: locked.version,
-        newVersion: version,
-        oldSha: locked.sha,
-      });
-      result.match = false;
+      if (!locked) {
+        result.newActions.push({
+          action: name,
+          newVersion: version,
+        });
+        result.match = false;
+      }
     }
   }
 
   // Check for removed actions (top-level only, not transitive deps)
   const topLevelActions = findTopLevelActions(lockfile);
 
-  for (const name of topLevelActions) {
-    if (!workflowActions.has(name)) {
-      const locked = lockfile.actions[name];
+  for (const { name, version } of topLevelActions) {
+    const workflowVersions = workflowActions.get(name);
+    if (!workflowVersions || !workflowVersions.has(version)) {
+      const lockedVersions = lockfile.actions[name] || [];
+      const locked = lockedVersions.find(a => a.version === version);
       if (locked) {
         result.removed.push({
           action: name,
@@ -83,16 +83,33 @@ export function verify(workflows: Workflow[], lockfile: Lockfile): VerifyResult 
   return result;
 }
 
-function findTopLevelActions(lockfile: Lockfile): Set<string> {
-  // Start with all actions as potentially top-level
-  const topLevel = new Set<string>(Object.keys(lockfile.actions));
+interface TopLevelAction {
+  name: string;
+  version: string;
+}
 
-  // Remove any that appear as transitive dependencies
-  for (const action of Object.values(lockfile.actions)) {
-    for (const dep of action.dependencies) {
-      const depRef = parseActionRef(dep.ref);
-      if (depRef) {
-        topLevel.delete(getFullName(depRef));
+function findTopLevelActions(lockfile: Lockfile): TopLevelAction[] {
+  // Build set of all transitive dependencies (as "name@version")
+  const transitiveDeps = new Set<string>();
+
+  for (const versions of Object.values(lockfile.actions)) {
+    for (const action of versions) {
+      for (const dep of action.dependencies) {
+        const depRef = parseActionRef(dep.ref);
+        if (depRef) {
+          transitiveDeps.add(`${getFullName(depRef)}@${depRef.ref}`);
+        }
+      }
+    }
+  }
+
+  // Return all action versions that are not transitive deps
+  const topLevel: TopLevelAction[] = [];
+  for (const [name, versions] of Object.entries(lockfile.actions)) {
+    for (const action of versions) {
+      const key = `${name}@${action.version}`;
+      if (!transitiveDeps.has(key)) {
+        topLevel.push({ name, version: action.version });
       }
     }
   }
