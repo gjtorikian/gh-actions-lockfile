@@ -1,4 +1,4 @@
-name: 'Actions Lockfile'
+name: 'GitHub Actions Lockfile'
 description: 'Generate and verify lockfiles for GitHub Actions dependencies'
 author: 'gjtorikian'
 
