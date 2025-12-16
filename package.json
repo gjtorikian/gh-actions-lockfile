@@ -50,7 +50,6 @@
   },
   "dependencies": {
     "commander": "^14.0.2",
-    "sharp": "^0.34.5",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
