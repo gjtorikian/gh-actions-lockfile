@@ -1,0 +1,41 @@
+---
+import "@/styles/globals.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Generate and verify lockfiles for GitHub Actions dependencies. Pin all actions to exact commit SHAs with integrity hashes." } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <title>{title}</title>
+    <script is:inline>
+      const theme = (() => {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      })();
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <slot />
+  </body>
+</html>

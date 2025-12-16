@@ -8,8 +8,8 @@ Commit messages determine how versions are bumped:
 
 | Commit Type                    | Example                       | Version Bump          |
 | ------------------------------ | ----------------------------- | --------------------- |
-| `feat:`                        | `feat: add dark mode support` | Minor (0.1.0 → 0.2.0) |
 | `fix:`                         | `fix: resolve editor crash`   | Patch (0.1.0 → 0.1.1) |
+| `feat:`                        | `feat: add dark mode support` | Minor (0.1.0 → 0.2.0) |
 | `feat!:` or `BREAKING CHANGE:` | `feat!: redesign API`         | Major (0.1.0 → 1.0.0) |
 | `docs:`, `chore:`, `test:`     | `docs: update README`         | No release            |
 
