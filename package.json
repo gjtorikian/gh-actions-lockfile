@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/gjtorikian/gh-actions-lockfile.git"
   },
-  "homepage": "https://github.com/gjtorikian/gh-actions-lockfile#readme",
+  "homepage": "https://gh-actions-lockfile.net",
   "bugs": {
     "url": "https://github.com/gjtorikian/gh-actions-lockfile/issues"
   },
