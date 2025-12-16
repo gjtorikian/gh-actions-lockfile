@@ -25,4 +25,4 @@ jobs:
       - run: bun run package --if-present
 
       - name: Publish package
-        run: bun publish -w gh-actions-lockfile --provenance --access public
+        run: bun publish --provenance --access public
