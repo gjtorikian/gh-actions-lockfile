@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.4...v1.0.0) (2025-12-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* consider that multiple versions of an action can exist
+
+### Features
+
+* consider that multiple versions of an action can exist ([7e3c878](https://github.com/gjtorikian/gh-actions-lockfile/commit/7e3c87856e7393aa85124455b83a16568c3ecf8d))
+
 ## [0.0.4](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.3...v0.0.4) (2025-12-16)
 
 
