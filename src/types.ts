@@ -31,7 +31,7 @@ export interface ActionRef {
 export interface Lockfile {
   version: number;
   generated: string;
-  actions: Record<string, LockedAction>;
+  actions: Record<string, LockedAction[]>;
 }
 
 export interface LockedAction {

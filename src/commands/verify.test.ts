@@ -1,8 +1,9 @@
 import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { verifyCommand } from "./verify.js";
+import { copyFixtures } from "../__fixtures__/helpers.js";
 
 // Suppress console.log during tests
 const originalLog = console.log;
@@ -41,36 +42,12 @@ describe("verifyCommand", () => {
     const workflowDir = join(testDir, ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
-
-    await writeFile(
-      join(workflowDir, "actions.lock.json"),
-      JSON.stringify(
-        {
-          version: 1,
-          generated: "2024-01-15T10:30:00.000Z",
-          actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
-          },
-        },
-        null,
-        2
-      )
+    await copyFixtures(
+      [
+        ["verify/workflow-match.yml", "ci.yml"],
+        ["verify/lockfile-match.json", "actions.lock.json"],
+      ],
+      workflowDir
     );
 
     // Should complete without throwing
@@ -90,36 +67,12 @@ jobs:
     await mkdir(workflowDir, { recursive: true });
 
     // Workflow uses v5 but lockfile has v4
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-`
-    );
-
-    await writeFile(
-      join(workflowDir, "actions.lock.json"),
-      JSON.stringify(
-        {
-          version: 1,
-          generated: "2024-01-15T10:30:00.000Z",
-          actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-              integrity: "sha256-abc123",
-              dependencies: [],
-            },
-          },
-        },
-        null,
-        2
-      )
+    await copyFixtures(
+      [
+        ["verify/workflow-mismatch-v5.yml", "ci.yml"],
+        ["verify/lockfile-mismatch-v4.json", "actions.lock.json"],
+      ],
+      workflowDir
     );
 
     // Should call process.exit(1)
@@ -142,16 +95,9 @@ jobs:
     const workflowDir = join(testDir, ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
+    await copyFixtures(
+      [["verify/workflow-match.yml", "ci.yml"]],
+      workflowDir
     );
 
     await expect(
@@ -167,39 +113,13 @@ jobs:
     const workflowDir = join(testDir, ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    // Workflow has checkout AND setup-node
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-`
-    );
-
-    // Lockfile only has checkout
-    await writeFile(
-      join(workflowDir, "actions.lock.json"),
-      JSON.stringify(
-        {
-          version: 1,
-          generated: "2024-01-15T10:30:00.000Z",
-          actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "abc123",
-              integrity: "sha256-xyz",
-              dependencies: [],
-            },
-          },
-        },
-        null,
-        2
-      )
+    // Workflow has checkout AND setup-node, but lockfile only has checkout
+    await copyFixtures(
+      [
+        ["verify/workflow-new-actions.yml", "ci.yml"],
+        ["verify/lockfile-new-actions.json", "actions.lock.json"],
+      ],
+      workflowDir
     );
 
     try {
@@ -219,44 +139,13 @@ jobs:
     const workflowDir = join(testDir, ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    // Workflow only has checkout
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
-
-    // Lockfile has both checkout AND setup-node
-    await writeFile(
-      join(workflowDir, "actions.lock.json"),
-      JSON.stringify(
-        {
-          version: 1,
-          generated: "2024-01-15T10:30:00.000Z",
-          actions: {
-            "actions/checkout": {
-              version: "v4",
-              sha: "abc123",
-              integrity: "sha256-xyz",
-              dependencies: [],
-            },
-            "actions/setup-node": {
-              version: "v4",
-              sha: "def456",
-              integrity: "sha256-abc",
-              dependencies: [],
-            },
-          },
-        },
-        null,
-        2
-      )
+    // Workflow only has checkout, but lockfile has both checkout AND setup-node
+    await copyFixtures(
+      [
+        ["verify/workflow-removed-actions.yml", "ci.yml"],
+        ["verify/lockfile-removed-actions.json", "actions.lock.json"],
+      ],
+      workflowDir
     );
 
     try {

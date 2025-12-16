@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "generated": "2024-01-15T10:30:00.000Z",
+  "actions": {
+    "actions/checkout": [
+      {
+        "version": "v4",
+        "sha": "abc123",
+        "integrity": "sha256-xyz",
+        "dependencies": []
+      }
+    ]
+  }
+}

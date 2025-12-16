@@ -34,12 +34,14 @@ describe("readLockfile", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-          integrity: "sha256-abc123",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123",
+            dependencies: [],
+          },
+        ],
       },
     };
     await Bun.write(lockfilePath, JSON.stringify(lockfile));
@@ -73,12 +75,14 @@ describe("writeLockfile", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
       },
     };
 
@@ -150,12 +154,14 @@ describe("verify", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
       },
     };
 
@@ -185,12 +191,14 @@ describe("verify", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
       },
     };
 
@@ -217,21 +225,23 @@ describe("verify", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
       },
     };
 
     const result = verify(workflows, lockfile);
     expect(result.match).toBe(false);
-    expect(result.changed).toHaveLength(1);
-    expect(result.changed[0]!.action).toBe("actions/checkout");
-    expect(result.changed[0]!.oldVersion).toBe("v4");
-    expect(result.changed[0]!.newVersion).toBe("v5");
+    // Now this detects v5 as NEW (since v4 exists but v5 doesn't)
+    expect(result.newActions).toHaveLength(1);
+    expect(result.newActions[0]!.action).toBe("actions/checkout");
+    expect(result.newActions[0]!.newVersion).toBe("v5");
   });
 
   test("detects removed actions", () => {
@@ -250,18 +260,22 @@ describe("verify", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
-        "actions/setup-node": {
-          version: "v4",
-          sha: "def456",
-          integrity: "sha256-abc",
-          dependencies: [],
-        },
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
+        "actions/setup-node": [
+          {
+            version: "v4",
+            sha: "def456",
+            integrity: "sha256-abc",
+            dependencies: [],
+          },
+        ],
       },
     };
 
@@ -288,24 +302,28 @@ describe("verify", () => {
       version: 1,
       generated: "2024-01-15T10:30:00.000Z",
       actions: {
-        "owner/composite-action": {
-          version: "v1",
-          sha: "111111",
-          integrity: "sha256-composite",
-          dependencies: [
-            {
-              ref: "actions/checkout@v4",
-              sha: "abc123",
-              integrity: "sha256-xyz",
-            },
-          ],
-        },
-        "actions/checkout": {
-          version: "v4",
-          sha: "abc123",
-          integrity: "sha256-xyz",
-          dependencies: [],
-        },
+        "owner/composite-action": [
+          {
+            version: "v1",
+            sha: "111111",
+            integrity: "sha256-composite",
+            dependencies: [
+              {
+                ref: "actions/checkout@v4",
+                sha: "abc123",
+                integrity: "sha256-xyz",
+              },
+            ],
+          },
+        ],
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "abc123",
+            integrity: "sha256-xyz",
+            dependencies: [],
+          },
+        ],
       },
     };
 
@@ -359,6 +377,95 @@ describe("verify", () => {
     const result = verify(workflows, lockfile);
     expect(result.match).toBe(false);
     expect(result.newActions).toHaveLength(1);
+  });
+
+  test("matches when workflow uses multiple versions of same action", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Test",
+        jobs: {
+          "build-v3": {
+            steps: [{ uses: "actions/checkout@v3" }],
+          },
+          "build-v4": {
+            steps: [{ uses: "actions/checkout@v4" }],
+          },
+        },
+      },
+    ];
+
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: "2024-01-15T10:30:00.000Z",
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v3",
+            sha: "abc123",
+            integrity: "sha256-v3",
+            dependencies: [],
+          },
+          {
+            version: "v4",
+            sha: "def456",
+            integrity: "sha256-v4",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const result = verify(workflows, lockfile);
+    expect(result.match).toBe(true);
+    expect(result.newActions).toEqual([]);
+    expect(result.removed).toEqual([]);
+  });
+
+  test("detects missing version when multiple versions exist in lockfile", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Test",
+        jobs: {
+          "build-v3": {
+            steps: [{ uses: "actions/checkout@v3" }],
+          },
+          "build-v4": {
+            steps: [{ uses: "actions/checkout@v4" }],
+          },
+          "build-v5": {
+            steps: [{ uses: "actions/checkout@v5" }],
+          },
+        },
+      },
+    ];
+
+    // Lockfile only has v3 and v4, missing v5
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: "2024-01-15T10:30:00.000Z",
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v3",
+            sha: "abc123",
+            integrity: "sha256-v3",
+            dependencies: [],
+          },
+          {
+            version: "v4",
+            sha: "def456",
+            integrity: "sha256-v4",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const result = verify(workflows, lockfile);
+    expect(result.match).toBe(false);
+    expect(result.newActions).toHaveLength(1);
+    expect(result.newActions[0]!.action).toBe("actions/checkout");
+    expect(result.newActions[0]!.newVersion).toBe("v5");
   });
 });
 

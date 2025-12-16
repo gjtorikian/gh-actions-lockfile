@@ -74,12 +74,14 @@ describe("Resolver", () => {
 
       expect(lockfile.version).toBe(1);
       expect(lockfile.generated).toBeDefined();
-      expect(lockfile.actions["actions/checkout"]).toEqual({
-        version: "v4",
-        sha,
-        integrity,
-        dependencies: [],
-      });
+      expect(lockfile.actions["actions/checkout"]).toEqual([
+        {
+          version: "v4",
+          sha,
+          integrity,
+          dependencies: [],
+        },
+      ]);
     });
 
     test("returns empty lockfile for no refs", async () => {
@@ -90,6 +92,49 @@ describe("Resolver", () => {
 
       expect(lockfile.version).toBe(1);
       expect(lockfile.actions).toEqual({});
+    });
+
+    test("resolves multiple versions of the same action", async () => {
+      const mockClient = createMockClient({
+        resolveRef: mock((owner: string, repo: string, ref: string) =>
+          Promise.resolve(`sha-${ref}`)
+        ),
+        getArchiveSHA256: mock((owner: string, repo: string, sha: string) =>
+          Promise.resolve(`integrity-${sha}`)
+        ),
+      });
+      const resolver = new Resolver(mockClient);
+
+      const refs: ActionRef[] = [
+        {
+          owner: "actions",
+          repo: "checkout",
+          ref: "v3",
+          rawUses: "actions/checkout@v3",
+        },
+        {
+          owner: "actions",
+          repo: "checkout",
+          ref: "v4",
+          rawUses: "actions/checkout@v4",
+        },
+      ];
+
+      const lockfile = await resolver.resolveAll(refs);
+
+      // Should have one key with both versions in array
+      expect(Object.keys(lockfile.actions)).toHaveLength(1);
+      expect(lockfile.actions["actions/checkout"]).toHaveLength(2);
+
+      const versions = lockfile.actions["actions/checkout"]!.map(a => a.version);
+      expect(versions).toContain("v3");
+      expect(versions).toContain("v4");
+
+      // Each version should have its own SHA
+      const v3 = lockfile.actions["actions/checkout"]!.find(a => a.version === "v3");
+      const v4 = lockfile.actions["actions/checkout"]!.find(a => a.version === "v4");
+      expect(v3!.sha).toBe("sha-v3");
+      expect(v4!.sha).toBe("sha-v4");
     });
   });
 
@@ -219,7 +264,7 @@ describe("Resolver", () => {
       expect(lockfile.actions["actions/setup-node"]).toBeDefined();
 
       // Composite action should have dependencies listed
-      expect(lockfile.actions["owner/composite"]!.dependencies).toHaveLength(2);
+      expect(lockfile.actions["owner/composite"]![0]!.dependencies).toHaveLength(2);
     });
   });
 
@@ -252,7 +297,7 @@ describe("Resolver", () => {
 
       // Should only have the action itself, no dependencies
       expect(Object.keys(lockfile.actions)).toHaveLength(1);
-      expect(lockfile.actions["owner/node-action"]!.dependencies).toEqual([]);
+      expect(lockfile.actions["owner/node-action"]![0]!.dependencies).toEqual([]);
     });
 
     test("extracts deps from composite action steps", async () => {
@@ -389,7 +434,7 @@ describe("Resolver", () => {
       // Should not throw, but integrity will be empty
       const lockfile = await resolver.resolveAll(refs);
       expect(lockfile.actions["actions/checkout"]).toBeDefined();
-      expect(lockfile.actions["actions/checkout"]!.integrity).toBe("");
+      expect(lockfile.actions["actions/checkout"]![0]!.integrity).toBe("");
     });
   });
 

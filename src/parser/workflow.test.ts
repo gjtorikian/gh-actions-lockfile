@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -10,6 +10,7 @@ import {
   parseWorkflowDir,
   extractActionRefs,
 } from "./workflow.js";
+import { copyFixture, copyFixtures } from "../__fixtures__/helpers.js";
 import type { ActionRef, Workflow } from "../types.js";
 
 describe("parseActionRef", () => {
@@ -157,17 +158,7 @@ describe("parseWorkflowFile", () => {
 
   test("parses valid workflow file", async () => {
     const workflowPath = join(tempDir, "valid.yml");
-    await writeFile(
-      workflowPath,
-      `name: Test
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
+    await copyFixture("workflow/workflow-valid.yml", workflowPath);
 
     const result = await parseWorkflowFile(workflowPath);
     expect(result).not.toBeNull();
@@ -178,9 +169,7 @@ jobs:
 
   test("returns null for invalid YAML", async () => {
     const workflowPath = join(tempDir, "invalid.yml");
-    // Use YAML that will cause a parse error (duplicate key with conflicting value)
-    // The yaml library doesn't always throw, so use syntax that actually fails
-    await writeFile(workflowPath, "name: Test\n  bad indentation here\n  another: line");
+    await copyFixture("workflow/workflow-invalid.yml", workflowPath);
 
     const result = await parseWorkflowFile(workflowPath);
     expect(result).toBeNull();
@@ -188,21 +177,7 @@ jobs:
 
   test("parses workflow with multiple jobs", async () => {
     const workflowPath = join(tempDir, "multi-job.yml");
-    await writeFile(
-      workflowPath,
-      `name: Multi
-on: push
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo lint
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-`
-    );
+    await copyFixture("workflow/workflow-multi-job.yml", workflowPath);
 
     const result = await parseWorkflowFile(workflowPath);
     expect(result).not.toBeNull();
@@ -222,27 +197,12 @@ describe("parseWorkflowDir", () => {
   });
 
   test("parses all .yml files in directory", async () => {
-    await writeFile(
-      join(tempDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ci
-`
-    );
-    await writeFile(
-      join(tempDir, "deploy.yml"),
-      `name: Deploy
-on: push
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo deploy
-`
+    await copyFixtures(
+      [
+        ["workflow/workflow-ci.yml", "ci.yml"],
+        ["workflow/workflow-deploy.yml", "deploy.yml"],
+      ],
+      tempDir
     );
 
     const result = await parseWorkflowDir(tempDir);
@@ -253,17 +213,7 @@ jobs:
   test("parses .yaml extension files", async () => {
     const subDir = join(tempDir, "yaml-ext");
     await mkdir(subDir);
-    await writeFile(
-      join(subDir, "test.yaml"),
-      `name: YAML Extension
-on: push
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-`
-    );
+    await copyFixture("workflow/workflow-yaml-extension.yaml", join(subDir, "test.yaml"));
 
     const result = await parseWorkflowDir(subDir);
     expect(result).toHaveLength(1);
@@ -273,18 +223,13 @@ jobs:
   test("ignores non-YAML files", async () => {
     const subDir = join(tempDir, "mixed");
     await mkdir(subDir);
-    await writeFile(join(subDir, "readme.md"), "# README");
-    await writeFile(join(subDir, "script.sh"), "echo hello");
-    await writeFile(
-      join(subDir, "workflow.yml"),
-      `name: Workflow
-on: push
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-`
+    await copyFixtures(
+      [
+        ["workflow/readme.md", "readme.md"],
+        ["workflow/script.sh", "script.sh"],
+        ["workflow/workflow-mixed-dir.yml", "workflow.yml"],
+      ],
+      subDir
     );
 
     const result = await parseWorkflowDir(subDir);
@@ -304,28 +249,8 @@ jobs:
     const subDir = join(tempDir, "with-subdir");
     await mkdir(subDir);
     await mkdir(join(subDir, "nested"));
-    await writeFile(
-      join(subDir, "nested", "workflow.yml"),
-      `name: Nested
-on: push
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-`
-    );
-    await writeFile(
-      join(subDir, "top.yml"),
-      `name: Top
-on: push
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo test
-`
-    );
+    await copyFixture("workflow/workflow-nested.yml", join(subDir, "nested", "workflow.yml"));
+    await copyFixture("workflow/workflow-top.yml", join(subDir, "top.yml"));
 
     const result = await parseWorkflowDir(subDir);
     expect(result).toHaveLength(1);

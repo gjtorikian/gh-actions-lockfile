@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "generated": "2024-01-15T10:30:00.000Z",
+  "actions": {
+    "actions/checkout": [
+      {
+        "version": "v3",
+        "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "integrity": "sha256-v3hash",
+        "dependencies": []
+      },
+      {
+        "version": "v4",
+        "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "integrity": "sha256-v4hash",
+        "dependencies": []
+      }
+    ]
+  }
+}
