@@ -1,5 +1,5 @@
 import { GitHubClient } from "../github/client.js";
-import { getFullName, parseActionRef } from "../parser/workflow.js";
+import { getFullName, parseActionRef, shouldSkipActionRef } from "../parser/workflow.js";
 import type { ActionRef, Lockfile, LockedAction, LockedDependency } from "../types.js";
 
 const MAX_DEPTH = 10;
@@ -105,12 +105,7 @@ export class Resolver {
 
     for (const step of config.runs.steps || []) {
       if (!step.uses) continue;
-
-      // Skip local actions
-      if (step.uses.startsWith("./")) continue;
-
-      // Skip docker references
-      if (step.uses.startsWith("docker://")) continue;
+      if (shouldSkipActionRef(step.uses)) continue;
 
       const depRef = parseActionRef(step.uses);
       if (depRef) {

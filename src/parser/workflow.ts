@@ -11,6 +11,11 @@ import type { ActionRef, Workflow } from "../types.js";
 // Groups: (1) owner, (2) repo, (3) optional path, (4) ref
 const ACTION_REF_REGEX = /^([^/]+)\/([^/@]+)(?:\/([^@]+))?@(.+)$/;
 
+// Returns true if the action reference should be skipped
+export function shouldSkipActionRef(uses: string): boolean {
+  return uses.startsWith("./") || uses.startsWith("docker://");
+}
+
 export async function parseWorkflowDir(dir: string): Promise<Workflow[]> {
   const files: string[] = [];
   for await (const file of glob(join(dir, "*.{yml,yaml}"))) {
@@ -45,12 +50,7 @@ export function extractActionRefs(workflows: Workflow[]): ActionRef[] {
 
       for (const step of job.steps) {
         if (!step.uses) continue;
-
-        // Skip local actions
-        if (step.uses.startsWith("./")) continue;
-
-        // Skip docker:// references
-        if (step.uses.startsWith("docker://")) continue;
+        if (shouldSkipActionRef(step.uses)) continue;
 
         // De-duplicate
         if (seen.has(step.uses)) continue;
