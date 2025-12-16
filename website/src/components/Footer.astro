@@ -1,0 +1,13 @@
+---
+interface Props {
+  githubUrl: string;
+}
+
+const { githubUrl } = Astro.props;
+---
+
+<footer class="border-t py-6 text-center text-sm text-muted-foreground">
+  <p>
+    <a href={githubUrl} class="text-primary hover:underline">gh-actions-lockfile</a> is open source under the AGPL-3.0 license.
+  </p>
+</footer>

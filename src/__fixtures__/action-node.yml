@@ -1,0 +1,6 @@
+name: Node Action
+description: A JavaScript action (no transitive deps)
+
+runs:
+  using: node20
+  main: dist/index.js

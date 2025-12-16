@@ -1,0 +1,102 @@
+---
+title: CLI Reference
+description: Complete reference for gh-actions-lockfile CLI options and environment variables.
+order: 4
+---
+
+# CLI Reference
+
+Complete reference for all CLI options and environment variables.
+
+## Options
+
+All commands accept the following options:
+
+### `-w, --workflows <path>`
+
+Path to the workflows directory.
+
+**Default:** `.github/workflows`
+
+```bash
+node dist/cli.js generate --workflows ./my-workflows
+```
+
+### `-o, --output <path>`
+
+Path to the lockfile.
+
+**Default:** `.github/workflows/actions.lock.json`
+
+```bash
+node dist/cli.js generate --output ./lockfile.json
+```
+
+### `-t, --token <token>`
+
+GitHub token for API authentication. Required for private repositories or to avoid rate limiting.
+
+```bash
+node dist/cli.js generate --token ghp_xxxxxxxxxxxx
+```
+
+## Environment Variables
+
+### `GITHUB_TOKEN`
+
+Alternative to the `--token` option. If both are provided, the command-line option takes precedence.
+
+```bash
+export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+node dist/cli.js generate
+```
+
+In GitHub Actions, this is automatically available:
+
+```yaml
+- uses: gjtorikian/gh-actions-lockfile@v1
+  with:
+    mode: generate
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+## Running with Different Runtimes
+
+### Node.js (Recommended)
+
+The built CLI works with Node.js without additional dependencies:
+
+```bash
+node dist/cli.js <command> [options]
+```
+
+### Bun
+
+You can also run directly from source with Bun:
+
+```bash
+bun run src/index.ts <command> [options]
+```
+
+## Examples
+
+Generate a lockfile with custom paths:
+
+```bash
+node dist/cli.js generate \
+  --workflows ./workflows \
+  --output ./workflows/actions.lock.json
+```
+
+Verify in CI with explicit token:
+
+```bash
+GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} node dist/cli.js verify
+```
+
+List dependencies for a specific lockfile:
+
+```bash
+node dist/cli.js list --output ./custom-lockfile.json
+```

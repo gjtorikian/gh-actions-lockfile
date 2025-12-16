@@ -1,0 +1,18 @@
+name: Special Refs
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Local action (should be skipped)
+      - uses: ./local-action
+
+      # Docker action (should be skipped)
+      - uses: docker://alpine:3.18
+
+      # Action with path
+      - uses: actions/cache/restore@v4
+
+      # Action with SHA
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11

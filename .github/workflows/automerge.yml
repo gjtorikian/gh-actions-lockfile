@@ -1,0 +1,14 @@
+name: PR auto-{approve,merge}
+
+on:
+  workflow_dispatch:
+  pull_request_target:
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  bot-check:
+    uses: gjtorikian/actions/.github/workflows/automerge.yml@main
+    secrets: inherit

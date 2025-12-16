@@ -1,0 +1,38 @@
+---
+import { docsNavigation } from "@/lib/docs-config";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+function isActive(href: string): boolean {
+  return currentPath === href || currentPath === href + "/";
+}
+---
+
+<nav class="space-y-6">
+  {docsNavigation.map((section) => (
+    <div>
+      <h4 class="mb-2 text-sm font-semibold text-foreground">{section.title}</h4>
+      <ul class="space-y-1">
+        {section.items.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class:list={[
+                "block rounded-md px-3 py-2 text-sm transition-colors",
+                isActive(item.href)
+                  ? "bg-accent text-accent-foreground font-medium"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              ]}
+            >
+              {item.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</nav>

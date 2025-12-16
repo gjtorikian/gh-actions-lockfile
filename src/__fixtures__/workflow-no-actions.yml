@@ -1,0 +1,11 @@
+name: No Actions
+on: workflow_dispatch
+
+jobs:
+  script:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello, World!"
+      - run: |
+          echo "Multi-line script"
+          date

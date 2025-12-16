@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "generated": "2024-01-15T10:30:00.000Z",
+  "actions": {
+    "actions/checkout": {
+      "version": "v4",
+      "sha": "b4ffde65f46336ab88eb53be808477a3936bae11",
+      "integrity": "sha256-abc123def456",
+      "dependencies": []
+    },
+    "actions/setup-node": {
+      "version": "v4",
+      "sha": "60edb5dd545a775178f52524783378180af0d1f8",
+      "integrity": "sha256-xyz789ghi012",
+      "dependencies": []
+    },
+    "aws-actions/configure-aws-credentials": {
+      "version": "v4",
+      "sha": "010d0104bdb0b0e87f8ca1779b10f08ed8f5a3ac",
+      "integrity": "sha256-jkl345mno678",
+      "dependencies": []
+    }
+  }
+}

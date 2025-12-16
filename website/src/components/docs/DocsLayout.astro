@@ -1,0 +1,102 @@
+---
+import Header from "../Header.astro";
+import Footer from "../Footer.astro";
+import DocsSidebar from "./DocsSidebar.astro";
+import { MobileNav } from "./MobileNav";
+import { githubUrl } from "@/lib/docs-config";
+import "@/styles/globals.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  currentPath: string;
+}
+
+const { title, description, currentPath } = Astro.props;
+const pageTitle = `${title} | gh-actions-lockfile`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description || `${title} - gh-actions-lockfile documentation`} />
+    <title>{pageTitle}</title>
+    <script is:inline>
+      const theme = (() => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })();
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <Header githubUrl={githubUrl} />
+
+    <div class="container mx-auto flex max-w-screen-xl">
+      <!-- Desktop Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0 border-r border-border">
+        <div class="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-6 pl-4">
+          <DocsSidebar currentPath={currentPath} />
+        </div>
+      </aside>
+
+      <!-- Mobile Nav -->
+      <MobileNav client:load currentPath={currentPath} />
+
+      <!-- Main Content -->
+      <main class="flex-1 min-w-0 px-4 py-8 lg:px-12">
+        <article class="prose prose-slate dark:prose-invert max-w-none prose-headings:scroll-mt-20 prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-normal">
+          <slot />
+        </article>
+      </main>
+    </div>
+
+    <Footer githubUrl={githubUrl} />
+
+    <style is:global>
+      html {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        line-height: 1.6;
+      }
+
+      /* Better code block styling */
+      .prose pre {
+        border: 1px solid hsl(var(--border));
+        border-radius: 0.5rem;
+      }
+
+      .prose pre code {
+        background: none;
+        padding: 0;
+        border-radius: 0;
+      }
+
+      /* Shiki code block theming */
+      .prose pre.astro-code {
+        background-color: var(--shiki-light-bg) !important;
+      }
+
+      .prose pre.astro-code span {
+        color: var(--shiki-light) !important;
+      }
+
+      .dark .prose pre.astro-code {
+        background-color: var(--shiki-dark-bg) !important;
+      }
+
+      .dark .prose pre.astro-code span {
+        color: var(--shiki-dark) !important;
+      }
+    </style>
+  </body>
+</html>

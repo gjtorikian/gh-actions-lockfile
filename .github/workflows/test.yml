@@ -1,0 +1,10 @@
+name: Tests
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    uses: gjtorikian/actions/.github/workflows/node_test.yml@main
+    secrets: inherit
+

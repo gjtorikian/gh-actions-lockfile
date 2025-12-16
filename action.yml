@@ -1,0 +1,63 @@
+name: 'Actions Lockfile'
+description: 'Generate and verify lockfiles for GitHub Actions dependencies'
+author: 'gjtorikian'
+
+branding:
+  icon: 'lock'
+  color: 'blue'
+
+inputs:
+  mode:
+    description: 'Mode to run in: generate or verify'
+    required: true
+    default: 'verify'
+  token:
+    description: 'GitHub token for API access'
+    required: false
+    default: ${{ github.token }}
+  workflows:
+    description: 'Path to workflows directory'
+    required: false
+    default: '.github/workflows'
+  output:
+    description: 'Path to lockfile'
+    required: false
+    default: '.github/workflows/actions.lock.json'
+
+outputs:
+  changed:
+    description: 'Whether the lockfile changed (for generate mode)'
+    value: ${{ steps.run.outputs.changed }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+        cache: true
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install --frozen-lockfile
+
+    - name: Run gh-actions-lockfile
+      id: run
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        bun run ${{ github.action_path }}/src/index.ts ${{ inputs.mode }} \
+          --workflows "${{ inputs.workflows }}" \
+          --output "${{ inputs.output }}"
+
+        # Check if lockfile changed (for generate mode)
+        if [ "${{ inputs.mode }}" = "generate" ]; then
+          if git diff --quiet "${{ inputs.output }}" 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+        fi

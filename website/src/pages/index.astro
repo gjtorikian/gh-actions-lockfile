@@ -1,0 +1,256 @@
+---
+import { Code } from "astro:components";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Check } from "lucide-react";
+import "@/styles/globals.css";
+
+const title = "gh-actions-lockfile";
+const description =
+  "Generate and verify lockfiles for GitHub Actions dependencies. Pin all actions to exact commit SHAs with integrity hashes.";
+const githubUrl = "https://github.com/gjtorikian/gh-actions-lockfile";
+
+const lockfileCode = `{
+  "version": 1,
+  "generated": "2025-12-15T20:37:39.422Z",
+  "actions": {
+    "actions/checkout": {
+      "version": "v4",
+      // This is the Git commit SHA (the 40-character hex hash).
+      // It identifies the exact commit in the action's repository that will be checked out.
+      // It answers: "which version of the code should I fetch?"
+      "sha": "11bd71901bbe5b1630ceea73d27597364c9af683",
+      // This is a Subresource Integrity (SRI) hash of the action's content (using SHA-256).
+      // It answers: "is the content I fetched what I expected?"
+      "integrity": "sha256-abc123...",
+      // This tracks transitive dependencies — other GitHub Actions that a composite action uses internally.
+      "dependencies": []
+    }
+  }
+}`;
+
+const actionCode = `- uses: gjtorikian/gh-actions-lockfile@v1
+  with:
+    mode: verify # or 'generate'`;
+
+const cliCode = `# Generate a lockfile
+node dist/cli.js generate
+
+# Verify workflows match
+node dist/cli.js verify
+
+# Show dependency tree
+node dist/cli.js list`;
+
+const features = [
+  "Pins actions to exact commit SHAs",
+  "Includes integrity hashes for verification",
+  "Resolves transitive dependencies from composite actions",
+  "Visualizes your action dependency tree",
+  "Runs as a GitHub Action or CLI tool",
+  "Zero runtime dependencies beyond Node.js",
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <script is:inline>
+      const theme = (() => {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      })();
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <Header githubUrl={githubUrl} />
+
+    <main class="container mx-auto max-w-screen-xl px-4">
+      <!-- Hero -->
+      <section
+        class="flex flex-col items-center gap-6 py-20 text-center md:py-28"
+      >
+        <h1
+          class="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl"
+        >
+          Lock down your GitHub Actions
+        </h1>
+        <p class="max-w-2xl text-lg text-muted-foreground md:text-xl">
+          Generate and verify lockfiles for GitHub Actions dependencies.<br />
+          Pin all actions to exact commit SHAs with integrity hashes.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href={githubUrl}>
+            <Button size="lg">Get Started</Button>
+          </a>
+          <a href="/docs/getting-started">
+            <Button variant="outline" size="lg">Documentation</Button>
+          </a>
+        </div>
+      </section>
+
+      <!-- Problem -->
+      <section class="py-16">
+        <h2 class="mb-10 text-center text-3xl font-bold">The Problem</h2>
+        <div class="grid gap-6 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">No Native Lockfile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                GitHub Actions has no built-in mechanism to lock dependency
+                versions.
+              </CardDescription>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Mutable Tags</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Version tags like <code
+                  class="rounded bg-muted px-1.5 py-0.5 text-sm">@v4</code
+                > can be silently retagged to point to different code.
+              </CardDescription>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Hidden Dependencies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Composite actions pull in transitive dependencies you can't see
+                or audit.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <!-- Solution -->
+      <section class="py-16">
+        <h2 class="mb-6 text-center text-3xl font-bold">The Solution</h2>
+        <p
+          class="mx-auto mb-8 max-w-2xl text-center text-lg text-muted-foreground"
+        >
+          <strong class="text-foreground">gh-actions-lockfile</strong> creates a lockfile
+          that pins every action (including transitive dependencies) to exact commit
+          SHAs with integrity hashes.
+        </p>
+        <div class="mx-auto max-w-3xl overflow-hidden rounded-lg border">
+          <Code
+            code={lockfileCode}
+            lang="jsonc"
+            themes={{ light: "solarized-light", dark: "solarized-dark" }}
+          />
+        </div>
+      </section>
+
+      <!-- Usage -->
+      <section class="py-16">
+        <h2 class="mb-10 text-center text-3xl font-bold">Quick Start</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg"
+                >As a GitHub Action (recommended)</CardTitle
+              >
+            </CardHeader>
+            <CardContent>
+              <div class="overflow-hidden rounded-lg border">
+                <Code
+                  code={actionCode}
+                  lang="yaml"
+                  themes={{ light: "solarized-light", dark: "solarized-dark" }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Via the CLI</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="overflow-hidden rounded-lg border">
+                <Code
+                  code={cliCode}
+                  lang="bash"
+                  themes={{ light: "solarized-light", dark: "solarized-dark" }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="py-16">
+        <h2 class="mb-10 text-center text-3xl font-bold">Features</h2>
+        <ul class="mx-auto max-w-xl space-y-3">
+          {
+            features.map((feature) => (
+              <li class="flex items-center gap-3 border-b pb-3 last:border-0">
+                <Check className="h-5 w-5 text-primary shrink-0" />
+                <span>{feature}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <!-- CTA -->
+      <section class="my-16 rounded-xl bg-muted p-10 text-center">
+        <h2 class="mb-6 text-3xl font-bold">Secure your workflows today</h2>
+        <a href={githubUrl}>
+          <Button size="lg">View on GitHub</Button>
+        </a>
+      </section>
+    </main>
+
+    <Footer githubUrl={githubUrl} />
+
+    <style is:global>
+      pre.astro-code,
+      pre.shiki {
+        padding: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.7;
+      }
+
+      .dark pre.astro-code,
+      .dark pre.shiki {
+        background-color: var(--shiki-dark-bg) !important;
+      }
+
+      .dark pre.astro-code span,
+      .dark pre.shiki span {
+        color: var(--shiki-dark) !important;
+      }
+    </style>
+  </body>
+</html>

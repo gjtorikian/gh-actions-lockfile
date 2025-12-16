@@ -1,0 +1,33 @@
+---
+import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Github } from "lucide-react";
+
+interface Props {
+  githubUrl: string;
+}
+
+const { githubUrl } = Astro.props;
+---
+
+<header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  <nav class="container mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
+    <a href="/" class="text-lg font-bold">
+      gh-actions-lockfile
+    </a>
+    <div class="flex items-center gap-2">
+      <a href="/docs/getting-started">
+        <Button variant="ghost" size="sm">
+          Docs
+        </Button>
+      </a>
+      <ThemeToggle client:load />
+      <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+        <Button variant="ghost" size="sm" className="gap-2">
+          <Github className="h-5 w-5" />
+          GitHub
+        </Button>
+      </a>
+    </div>
+  </nav>
+</header>

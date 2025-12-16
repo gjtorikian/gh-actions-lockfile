@@ -1,0 +1,13 @@
+name: Lint
+
+on:
+  pull_request:
+
+env:
+  NODE_ENV: test
+
+jobs:
+  lint:
+    uses: gjtorikian/actions/.github/workflows/node_lint.yml@main
+    secrets: inherit
+
