@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",
-    "@astrojs/tailwind": "^6.0.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
-    "@tailwindcss/typography": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.0.0",
     "astro": "^5.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -21,7 +21,7 @@
     "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
-    "tailwindcss-animate": "^1.0.7"
+    "tw-animate-css": "^1.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.7",

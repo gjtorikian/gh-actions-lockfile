@@ -1,8 +1,11 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  vite: {
+    plugins: [tailwindcss()],
+  },
   image: {
     service: {
       entrypoint: 'astro/assets/services/noop',
@@ -17,10 +20,5 @@ export default defineConfig({
       defaultColor: false,
     },
   },
-  integrations: [
-    react(),
-    tailwind({
-      applyBaseStyles: false,
-    }),
-  ],
+  integrations: [react()],
 });
