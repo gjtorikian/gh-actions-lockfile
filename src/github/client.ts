@@ -17,18 +17,21 @@ export class GitHubClient {
       return ref;
     }
 
-    // Then, try as a tag
-    try {
-      return await this.resolveTag(owner, repo, ref);
-    } catch {
-      // Ignore and try branch
-    }
+    const resolvers = [
+      () => this.resolveTag(owner, repo, ref),
+      () => this.resolveBranch(owner, repo, ref),
+    ];
 
-    // Now, try as a branch
-    try {
-      return await this.resolveBranch(owner, repo, ref);
-    } catch {
-      // Ignore
+    for (const resolver of resolvers) {
+      try {
+        return await resolver();
+      } catch (e) {
+        // Rethrow rate limit errors immediately
+        if (e instanceof Error && e.message.includes("rate limit")) {
+          throw e;
+        }
+        // Otherwise, continue to next resolver
+      }
     }
 
     throw new Error(`Could not resolve ref "${ref}" for ${owner}/${repo}`);
@@ -102,6 +105,16 @@ export class GitHubClient {
 
     if (response.status === 404) {
       throw new Error("Not found");
+    }
+
+    if (response.status === 403) {
+      const body = await response.text();
+      if (body.includes("rate limit") || body.includes("API rate limit")) {
+        throw new Error(
+          "GitHub API rate limit exceeded. Set the GITHUB_TOKEN environment variable to authenticate and increase your rate limit."
+        );
+      }
+      throw new Error(`Request failed: ${response.status}: ${body}`);
     }
 
     if (!response.ok) {

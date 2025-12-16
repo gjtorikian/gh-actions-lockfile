@@ -135,6 +135,28 @@ describe("GitHubClient", () => {
         client.resolveRef("owner", "repo", "nonexistent")
       ).rejects.toThrow('Could not resolve ref "nonexistent"');
     });
+
+    test("throws helpful error on rate limit", async () => {
+      mockFetch.mockImplementation(() => {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              message: "API rate limit exceeded for 1.2.3.4",
+              documentation_url: "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
+            }),
+            { status: 403 }
+          )
+        );
+      });
+
+      const client = new GitHubClient("test-token");
+      await expect(
+        client.resolveRef("owner", "repo", "v1")
+      ).rejects.toThrow("rate limit exceeded");
+      await expect(
+        client.resolveRef("owner", "repo", "v1")
+      ).rejects.toThrow("GITHUB_TOKEN");
+    });
   });
 
   describe("getActionConfig", () => {
