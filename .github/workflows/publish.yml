@@ -22,7 +22,13 @@ jobs:
       - name: Set up Bun
         uses: gjtorikian/actions/setup-languages/bun@main
 
+      - name: Set up Node (for npm publish with OIDC)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
       - run: bun run package --if-present
 
       - name: Publish package
-        run: bun publish --provenance --access public
+        run: npm publish --provenance --access public
