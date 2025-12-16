@@ -207,7 +207,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ## Lockfile Format
 
-```json
+```jsonc
 {
   "version": 1,
   "generated": "2025-12-15T20:37:39.422Z",
