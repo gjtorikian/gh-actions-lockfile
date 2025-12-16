@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.3...v0.0.4) (2025-12-16)
+
+
+### Bug Fixes
+
+* whoops, DRY up copy-paste ([4c3e1da](https://github.com/gjtorikian/gh-actions-lockfile/commit/4c3e1da8a547abdb192c5c0d3bfea90fe09680e2))
+
 ## [0.0.3](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.2...v0.0.3) (2025-12-16)
 
 
