@@ -49,7 +49,7 @@
     "docs:preview": "npm run preview -w website"
   },
   "dependencies": {
-    "commander": "^12.1.0",
+    "commander": "^14.0.2",
     "sharp": "^0.34.5",
     "yaml": "^2.6.1"
   },
