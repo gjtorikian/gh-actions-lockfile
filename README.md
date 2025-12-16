@@ -213,16 +213,18 @@ actions.lock.json (generated 2025-12-15 21:57:33)
   "generated": "2025-12-15T20:37:39.422Z",
   "actions": {
     "actions/checkout": [
-      "version": "v4",
-      // This is the Git commit SHA (the 40-character hex hash).
-      // It identifies the exact commit in the action's repository that will be checked out.
-      // It answers: "which version of the code should I fetch?"
-      "sha": "11bd71901bbe5b1630ceea73d27597364c9af683",
-      // This is a Subresource Integrity (SRI) hash of the action's content (using SHA-256).
-      // It answers: "is the content I fetched what I expected?"
-      "integrity": "sha256-abc123...",
-      // This tracks transitive dependencies — other GitHub Actions that a composite action uses internally.
-      "dependencies": []
+      {
+        "version": "v4",
+        // This is the Git commit SHA (the 40-character hex hash).
+        // It identifies the exact commit in the action's repository that will be checked out.
+        // It answers: "which version of the code should I fetch?"
+        "sha": "11bd71901bbe5b1630ceea73d27597364c9af683",
+        // This is a Subresource Integrity (SRI) hash of the action's content (using SHA-256).
+        // It answers: "is the content I fetched what I expected?"
+        "integrity": "sha256-abc123...",
+        // This tracks transitive dependencies — other GitHub Actions that a composite action uses internally.
+        "dependencies": []
+      }
     ]
   }
 }
