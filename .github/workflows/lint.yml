@@ -8,6 +8,7 @@ env:
 
 jobs:
   lint:
-    uses: gjtorikian/actions/.github/workflows/node_lint.yml@main
-    secrets: inherit
+    uses: gjtorikian/actions/.github/workflows/bun_lint.yml@main
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
 

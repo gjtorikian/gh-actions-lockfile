@@ -19,10 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Node
-        uses: gjtorikian/actions/setup-languages/node@main
+      - name: Set up Bun
+        uses: gjtorikian/actions/setup-languages/bun@main
 
-      - run: npm run package --if-present
+      - run: bun run package --if-present
 
-      - name: Publish core package
-        run: npm publish -w gh-actions-lockfile --provenance --access public
+      - name: Publish package
+        run: bun publish -w gh-actions-lockfile --provenance --access public
