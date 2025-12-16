@@ -63,7 +63,24 @@ export class GitHubClient {
     sha: string,
     path?: string
   ): Promise<ActionConfig | null> {
-    // Try action.yml first, then action.yaml
+    // If path ends with .yml/.yaml, it's a reusable workflow - fetch directly
+    if (path?.endsWith(".yml") || path?.endsWith(".yaml")) {
+      try {
+        const url = `${BASE_URL}/repos/${owner}/${repo}/contents/${path}?ref=${sha}`;
+        const content = await this.get<FileContent>(url);
+
+        if (!content.download_url) return null;
+
+        const response = await this.fetch(content.download_url);
+        const text = await response.text();
+
+        return parseYaml(text) as ActionConfig;
+      } catch {
+        return null;
+      }
+    }
+
+    // Otherwise, try action.yml first, then action.yaml
     for (const filename of ["action.yml", "action.yaml"]) {
       const filePath = path ? `${path}/${filename}` : filename;
 

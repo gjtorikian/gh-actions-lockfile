@@ -1,4 +1,4 @@
-// Workflow types (from GitHub Actions YAML)
+// Workflow types
 export interface Workflow {
   name?: string;
   on?: unknown;
@@ -9,6 +9,7 @@ export interface Job {
   name?: string;
   "runs-on"?: string;
   steps?: Step[];
+  uses?: string;
 }
 
 export interface Step {
@@ -27,7 +28,6 @@ export interface ActionRef {
   rawUses: string;
 }
 
-// Lockfile types
 export interface Lockfile {
   version: number;
   generated: string;
@@ -47,7 +47,6 @@ export interface LockedDependency {
   integrity: string;
 }
 
-// Verification result
 export interface VerifyResult {
   match: boolean;
   newActions: ChangeInfo[];
@@ -97,4 +96,5 @@ export interface ActionConfig {
       run?: string;
     }>;
   };
+  jobs?: Record<string, Job>;
 }

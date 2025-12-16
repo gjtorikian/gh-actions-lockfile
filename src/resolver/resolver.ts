@@ -96,23 +96,51 @@ export class Resolver {
       return [];
     }
 
-    // Only composite actions have transitive deps
-    if (config.runs?.using !== "composite") {
-      return [];
-    }
-
     const deps: ActionRef[] = [];
 
-    for (const step of config.runs.steps || []) {
-      if (!step.uses) continue;
-      if (shouldSkipActionRef(step.uses)) continue;
+    // Handle composite actions
+    if (config.runs?.using === "composite") {
+      for (const step of config.runs.steps || []) {
+        if (!step.uses) continue;
+        if (shouldSkipActionRef(step.uses)) continue;
 
-      const depRef = parseActionRef(step.uses);
-      if (depRef) {
-        deps.push(depRef);
+        const depRef = parseActionRef(step.uses);
+        if (depRef) {
+          deps.push(depRef);
+        }
       }
+      return deps;
     }
 
-    return deps;
+    // Handle reusable workflows (which have jobs instead of runs)
+    if (config.jobs) {
+      for (const job of Object.values(config.jobs)) {
+        // nested reusable workflow calls
+        if (job.uses) {
+          if (!shouldSkipActionRef(job.uses)) {
+            const depRef = parseActionRef(job.uses);
+            if (depRef) {
+              deps.push(depRef);
+            }
+          }
+        }
+
+        // Step-level uses
+        if (job.steps) {
+          for (const step of job.steps) {
+            if (!step.uses) continue;
+            if (shouldSkipActionRef(step.uses)) continue;
+
+            const depRef = parseActionRef(step.uses);
+            if (depRef) {
+              deps.push(depRef);
+            }
+          }
+        }
+      }
+      return deps;
+    }
+
+    return [];
   }
 }

@@ -510,4 +510,85 @@ describe("extractActionRefs", () => {
       "aws-actions/configure-aws-credentials@v4",
     ]);
   });
+
+  test("extracts job-level uses (reusable workflows)", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Test",
+        jobs: {
+          test: {
+            uses: "owner/repo/.github/workflows/test.yml@main",
+          },
+        },
+      },
+    ];
+
+    const result = extractActionRefs(workflows);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.rawUses).toBe("owner/repo/.github/workflows/test.yml@main");
+    expect(result[0]!.path).toBe(".github/workflows/test.yml");
+  });
+
+  test("extracts both job-level and step-level uses", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Mixed",
+        jobs: {
+          reusable: {
+            uses: "owner/repo/.github/workflows/reusable.yml@main",
+          },
+          regular: {
+            steps: [{ uses: "actions/checkout@v4" }],
+          },
+        },
+      },
+    ];
+
+    const result = extractActionRefs(workflows);
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.rawUses).sort()).toEqual([
+      "actions/checkout@v4",
+      "owner/repo/.github/workflows/reusable.yml@main",
+    ]);
+  });
+
+  test("deduplicates job-level uses", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Test1",
+        jobs: {
+          test: {
+            uses: "owner/repo/.github/workflows/test.yml@main",
+          },
+        },
+      },
+      {
+        name: "Test2",
+        jobs: {
+          test: {
+            uses: "owner/repo/.github/workflows/test.yml@main",
+          },
+        },
+      },
+    ];
+
+    const result = extractActionRefs(workflows);
+    expect(result).toHaveLength(1);
+  });
+
+  test("skips local reusable workflows (./)", () => {
+    const workflows: Workflow[] = [
+      {
+        name: "Test",
+        jobs: {
+          test: {
+            uses: "./.github/workflows/local.yml",
+          },
+        },
+      },
+    ];
+
+    const result = extractActionRefs(workflows);
+    expect(result).toEqual([]);
+  });
 });

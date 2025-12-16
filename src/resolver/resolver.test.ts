@@ -413,4 +413,186 @@ describe("Resolver", () => {
       expect(lockfile.actions["actions/cache/restore"]).toBeDefined();
     });
   });
+
+  describe("reusable workflows", () => {
+    test("extracts deps from reusable workflow jobs", async () => {
+      const mockClient = createMockClient({
+        resolveRef: mock((owner: string, repo: string) =>
+          Promise.resolve(`sha-${owner}-${repo}`)
+        ),
+        getActionConfig: mock(
+          (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
+            if (path === ".github/workflows/reusable.yml") {
+              return Promise.resolve({
+                name: "Reusable Workflow",
+                jobs: {
+                  build: {
+                    steps: [
+                      { uses: "actions/checkout@v4" },
+                      { uses: "actions/setup-node@v4" },
+                    ],
+                  },
+                },
+              });
+            }
+            return Promise.resolve(null);
+          }
+        ),
+      });
+
+      const resolver = new Resolver(mockClient);
+
+      const refs: ActionRef[] = [
+        {
+          owner: "owner",
+          repo: "repo",
+          ref: "main",
+          path: ".github/workflows/reusable.yml",
+          rawUses: "owner/repo/.github/workflows/reusable.yml@main",
+        },
+      ];
+
+      const lockfile = await resolver.resolveAll(refs);
+
+      // Should have the reusable workflow and its dependencies
+      expect(Object.keys(lockfile.actions)).toHaveLength(3);
+      expect(lockfile.actions["owner/repo/.github/workflows/reusable.yml"]).toBeDefined();
+      expect(lockfile.actions["actions/checkout"]).toBeDefined();
+      expect(lockfile.actions["actions/setup-node"]).toBeDefined();
+    });
+
+    test("extracts deps from nested reusable workflow calls", async () => {
+      const mockClient = createMockClient({
+        resolveRef: mock((owner: string, repo: string) =>
+          Promise.resolve(`sha-${owner}-${repo}`)
+        ),
+        getActionConfig: mock(
+          (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
+            if (path === ".github/workflows/parent.yml") {
+              return Promise.resolve({
+                name: "Parent Workflow",
+                jobs: {
+                  nested: {
+                    uses: "other/repo/.github/workflows/child.yml@v1",
+                  },
+                },
+              });
+            }
+            return Promise.resolve(null);
+          }
+        ),
+      });
+
+      const resolver = new Resolver(mockClient);
+
+      const refs: ActionRef[] = [
+        {
+          owner: "owner",
+          repo: "repo",
+          ref: "main",
+          path: ".github/workflows/parent.yml",
+          rawUses: "owner/repo/.github/workflows/parent.yml@main",
+        },
+      ];
+
+      const lockfile = await resolver.resolveAll(refs);
+
+      // Should have parent and child workflow
+      expect(Object.keys(lockfile.actions)).toHaveLength(2);
+      expect(lockfile.actions["owner/repo/.github/workflows/parent.yml"]).toBeDefined();
+      expect(lockfile.actions["other/repo/.github/workflows/child.yml"]).toBeDefined();
+    });
+
+    test("extracts deps from multiple jobs in reusable workflow", async () => {
+      const mockClient = createMockClient({
+        resolveRef: mock((owner: string, repo: string) =>
+          Promise.resolve(`sha-${owner}-${repo}`)
+        ),
+        getActionConfig: mock(
+          (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
+            if (path === ".github/workflows/multi.yml") {
+              return Promise.resolve({
+                name: "Multi Job Workflow",
+                jobs: {
+                  lint: {
+                    steps: [{ uses: "actions/checkout@v4" }],
+                  },
+                  test: {
+                    steps: [{ uses: "actions/setup-node@v4" }],
+                  },
+                  deploy: {
+                    uses: "another/workflow/.github/workflows/deploy.yml@main",
+                  },
+                },
+              });
+            }
+            return Promise.resolve(null);
+          }
+        ),
+      });
+
+      const resolver = new Resolver(mockClient);
+
+      const refs: ActionRef[] = [
+        {
+          owner: "owner",
+          repo: "repo",
+          ref: "main",
+          path: ".github/workflows/multi.yml",
+          rawUses: "owner/repo/.github/workflows/multi.yml@main",
+        },
+      ];
+
+      const lockfile = await resolver.resolveAll(refs);
+
+      // Should have: multi.yml, checkout, setup-node, deploy.yml
+      expect(Object.keys(lockfile.actions)).toHaveLength(4);
+      expect(lockfile.actions["owner/repo/.github/workflows/multi.yml"]).toBeDefined();
+      expect(lockfile.actions["actions/checkout"]).toBeDefined();
+      expect(lockfile.actions["actions/setup-node"]).toBeDefined();
+      expect(lockfile.actions["another/workflow/.github/workflows/deploy.yml"]).toBeDefined();
+    });
+
+    test("skips local reusable workflow calls in jobs", async () => {
+      const mockClient = createMockClient({
+        getActionConfig: mock(
+          (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
+            if (path === ".github/workflows/test.yml") {
+              return Promise.resolve({
+                name: "Test Workflow",
+                jobs: {
+                  local: {
+                    uses: "./.github/workflows/local.yml",
+                  },
+                  remote: {
+                    steps: [{ uses: "actions/checkout@v4" }],
+                  },
+                },
+              });
+            }
+            return Promise.resolve(null);
+          }
+        ),
+      });
+
+      const resolver = new Resolver(mockClient);
+
+      const refs: ActionRef[] = [
+        {
+          owner: "owner",
+          repo: "repo",
+          ref: "main",
+          path: ".github/workflows/test.yml",
+          rawUses: "owner/repo/.github/workflows/test.yml@main",
+        },
+      ];
+
+      const lockfile = await resolver.resolveAll(refs);
+
+      // Should have test.yml and checkout, but not the local workflow
+      expect(Object.keys(lockfile.actions)).toHaveLength(2);
+      expect(lockfile.actions["owner/repo/.github/workflows/test.yml"]).toBeDefined();
+      expect(lockfile.actions["actions/checkout"]).toBeDefined();
+    });
+  });
 });

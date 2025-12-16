@@ -46,6 +46,18 @@ export function extractActionRefs(workflows: Workflow[]): ActionRef[] {
     if (!workflow.jobs) continue;
 
     for (const job of Object.values(workflow.jobs)) {
+      // Check job-level uses (reusable workflow calls)
+      if (job.uses) {
+        if (!shouldSkipActionRef(job.uses) && !seen.has(job.uses)) {
+          seen.add(job.uses);
+          const ref = parseActionRef(job.uses);
+          if (ref) {
+            refs.push(ref);
+          }
+        }
+      }
+
+      // Check step-level uses ("regular" actions)
       if (!job.steps) continue;
 
       for (const step of job.steps) {

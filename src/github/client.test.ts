@@ -253,6 +253,75 @@ runs:
       expect(result).not.toBeNull();
       expect(result?.name).toBe("Nested Action");
     });
+
+    test("fetches reusable workflow file directly when path ends with .yml", async () => {
+      const workflowYml = `name: Reusable Workflow
+on:
+  workflow_call:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+`;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/contents/.github/workflows/reusable.yml")) {
+          return Promise.resolve(
+            mockResponse({
+              download_url: "https://raw.githubusercontent.com/owner/repo/sha/.github/workflows/reusable.yml",
+            })
+          );
+        }
+        if (url.includes("raw.githubusercontent.com")) {
+          return Promise.resolve(mockTextResponse(workflowYml));
+        }
+        return Promise.resolve(new Response(null, { status: 404 }));
+      });
+
+      const client = new GitHubClient("test-token");
+      const result = await client.getActionConfig("owner", "repo", "abc123", ".github/workflows/reusable.yml");
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe("Reusable Workflow");
+      expect(result?.jobs?.test).toBeDefined();
+    });
+
+    test("fetches reusable workflow file directly when path ends with .yaml", async () => {
+      const workflowYml = `name: YAML Extension Workflow
+on:
+  workflow_call:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+`;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/contents/.github/workflows/build.yaml")) {
+          return Promise.resolve(
+            mockResponse({
+              download_url: "https://raw.githubusercontent.com/owner/repo/sha/.github/workflows/build.yaml",
+            })
+          );
+        }
+        if (url.includes("raw.githubusercontent.com")) {
+          return Promise.resolve(mockTextResponse(workflowYml));
+        }
+        return Promise.resolve(new Response(null, { status: 404 }));
+      });
+
+      const client = new GitHubClient("test-token");
+      const result = await client.getActionConfig("owner", "repo", "abc123", ".github/workflows/build.yaml");
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe("YAML Extension Workflow");
+    });
+
+    test("returns null for missing reusable workflow file", async () => {
+      mockFetch.mockImplementation(() => {
+        return Promise.resolve(new Response(null, { status: 404 }));
+      });
+
+      const client = new GitHubClient("test-token");
+      const result = await client.getActionConfig("owner", "repo", "abc123", ".github/workflows/missing.yml");
+      expect(result).toBeNull();
+    });
   });
 
   describe("getArchiveSHA256", () => {
