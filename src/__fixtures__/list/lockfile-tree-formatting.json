@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "generated": "2024-01-15T10:30:00.000Z",
+  "actions": {
+    "owner/composite": [
+      {
+        "version": "v1",
+        "sha": "1111111111111111111111111111111111111111",
+        "integrity": "sha256-comp",
+        "dependencies": [
+          {
+            "ref": "actions/checkout@v4",
+            "sha": "abc123",
+            "integrity": "sha256-abc"
+          }
+        ]
+      }
+    ],
+    "actions/checkout": [
+      {
+        "version": "v4",
+        "sha": "abc123def456abc123def456abc123def456abc1",
+        "integrity": "sha256-abc",
+        "dependencies": []
+      }
+    ]
+  }
+}

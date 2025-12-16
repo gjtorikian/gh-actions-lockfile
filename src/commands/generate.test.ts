@@ -1,8 +1,9 @@
 import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach, mock } from "bun:test";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { generate } from "./generate.js";
+import { copyFixture, copyFixtures } from "../__fixtures__/helpers.js";
 
 // Mock fetch to avoid real GitHub API calls
 const originalFetch = globalThis.fetch;
@@ -84,17 +85,7 @@ describe("generate command", () => {
     // Create workflow directory structure
     const workflowDir = join(tempDir, "test1", ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
+    await copyFixture("generate/workflow-single-action.yml", join(workflowDir, "ci.yml"));
 
     const outputPath = join(tempDir, "test1", ".github", "workflows", "actions.lock.json");
 
@@ -131,17 +122,7 @@ jobs:
     // Create workflow with no actions
     const workflowDir = join(tempDir, "no-actions", ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
-    await writeFile(
-      join(workflowDir, "script.yml"),
-      `name: Script Only
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Hello"
-`
-    );
+    await copyFixture("generate/workflow-no-actions.yml", join(workflowDir, "script.yml"));
 
     const outputPath = join(tempDir, "no-actions", "output.json");
 
@@ -162,29 +143,12 @@ jobs:
     const workflowDir = join(tempDir, "multi", ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
-
-    await writeFile(
-      join(workflowDir, "deploy.yml"),
-      `name: Deploy
-on: push
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-`
+    await copyFixtures(
+      [
+        ["generate/workflow-ci.yml", "ci.yml"],
+        ["generate/workflow-deploy.yml", "deploy.yml"],
+      ],
+      workflowDir
     );
 
     const outputPath = join(tempDir, "multi", ".github", "workflows", "actions.lock.json");
@@ -209,17 +173,7 @@ jobs:
     const workflowDir = join(repoRoot, ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
+    await copyFixture("generate/workflow-single-action.yml", join(workflowDir, "ci.yml"));
 
     // Use default relative output path
     await generate({
@@ -241,21 +195,7 @@ jobs:
     const workflowDir = join(tempDir, "multi-version", ".github", "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    await writeFile(
-      join(workflowDir, "ci.yml"),
-      `name: CI
-on: push
-jobs:
-  build-v3:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-  build-v4:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-`
-    );
+    await copyFixture("generate/workflow-multi-version.yml", join(workflowDir, "ci.yml"));
 
     const outputPath = join(workflowDir, "actions.lock.json");
 

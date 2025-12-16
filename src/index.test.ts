@@ -1,7 +1,8 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { copyFixture } from "./__fixtures__/helpers.js";
 
 const CLI_PATH = join(import.meta.dir, "index.ts");
 
@@ -105,10 +106,7 @@ describe("CLI", () => {
       const testDir = join(tempDir, "verify-test");
       const workflowDir = join(testDir, ".github", "workflows");
       await mkdir(workflowDir, { recursive: true });
-      await writeFile(
-        join(workflowDir, "ci.yml"),
-        "name: CI\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo test"
-      );
+      await copyFixture("index/workflow-verify-test.yml", join(workflowDir, "ci.yml"));
 
       const { exitCode, stderr } = await runCli(
         ["verify", "-w", workflowDir],
@@ -148,27 +146,7 @@ describe("CLI", () => {
       const workflowDir = join(testDir, ".github", "workflows");
       await mkdir(workflowDir, { recursive: true });
 
-      await writeFile(
-        join(workflowDir, "actions.lock.json"),
-        JSON.stringify(
-          {
-            version: 1,
-            generated: "2024-01-15T10:30:00.000Z",
-            actions: {
-              "actions/checkout": [
-                {
-                  version: "v4",
-                  sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
-                  integrity: "sha256-abc123",
-                  dependencies: [],
-                },
-              ],
-            },
-          },
-          null,
-          2
-        )
-      );
+      await copyFixture("index/lockfile-cli-test.json", join(workflowDir, "actions.lock.json"));
 
       const { stdout, exitCode } = await runCli(
         ["list", "-w", workflowDir, "-o", join(workflowDir, "actions.lock.json")],
