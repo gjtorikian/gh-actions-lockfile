@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "generated": "2025-12-16T04:55:42.664Z",
+  "actions": {
+    "actions/checkout": {
+      "version": "v6",
+      "sha": "8e8c483db84b4bee98b60c0593521ed34d9990e8",
+      "integrity": "sha256-d414ece895ebce08c818601c45ca8489806731838f8eed6356031b3d1877a7a1",
+      "dependencies": []
+    },
+    "oven-sh/setup-bun": {
+      "version": "v2",
+      "sha": "735343b667d3e6f658f44d0eca948eb6282f2b76",
+      "integrity": "sha256-476f44de816b487b0b73224d623d1e7a788fa2d183a45647f836302486afe716",
+      "dependencies": []
+    },
+    "gjtorikian/actions/setup-languages/bun": {
+      "version": "main",
+      "sha": "093b23423983b9792ccb89a493b412eb9ff835bc",
+      "integrity": "sha256-69001b7a101322e1ecfa36c6281b97c5e962ce5c166a665fc6d651d2338a9bed",
+      "dependencies": [
+        {
+          "ref": "oven-sh/setup-bun@v2",
+          "sha": "735343b667d3e6f658f44d0eca948eb6282f2b76",
+          "integrity": "sha256-476f44de816b487b0b73224d623d1e7a788fa2d183a45647f836302486afe716"
+        }
+      ]
+    },
+    "actions/setup-node": {
+      "version": "v6",
+      "sha": "395ad3262231945c25e8478fd5baf05154b1d79f",
+      "integrity": "sha256-1a5a752048e0de0f754f1c3ca6b923503899bf080b3d08f81fca277de87b3794",
+      "dependencies": []
+    },
+    "actions/configure-pages": {
+      "version": "v5",
+      "sha": "983d7736d9b0ae728b81ab479565c72886d7745b",
+      "integrity": "sha256-9116718f87b423953ee6824c552444b4ad83228c3c9ae28b60284b1951043bf5",
+      "dependencies": []
+    },
+    "actions/upload-artifact": {
+      "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+      "sha": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+      "integrity": "sha256-d5ee64a6e1acd6b34ba789dbae72b073637349d9ac9fb6fe07d5cbcd40768eae",
+      "dependencies": []
+    },
+    "actions/upload-pages-artifact": {
+      "version": "v4",
+      "sha": "7b1f4a764d45c48632c6b24a0339c27f5614fb0b",
+      "integrity": "sha256-11916470d50964dac182a875ce035408877333335d3b7d0e47e7fcf6459362ce",
+      "dependencies": [
+        {
+          "ref": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "sha": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "integrity": "sha256-d5ee64a6e1acd6b34ba789dbae72b073637349d9ac9fb6fe07d5cbcd40768eae"
+        }
+      ]
+    },
+    "actions/deploy-pages": {
+      "version": "v4",
+      "sha": "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e",
+      "integrity": "sha256-7546e9bc806674aba44b5f2bd026eadea16acd49b3cddda6b0228691e70964a7",
+      "dependencies": []
+    },
+    "googleapis/release-please-action": {
+      "version": "v4",
+      "sha": "16a9c90856f42705d54a6fda1823352bdc62cf38",
+      "integrity": "sha256-f36976025f4983224397b92691afc9b00eab2a51cffdb58d6fb481a8be52e016",
+      "dependencies": []
+    }
+  }
+}

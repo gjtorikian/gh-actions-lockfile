@@ -158,6 +158,13 @@ Or use `npx` without installing:
 npx gh-actions-lockfile generate
 ```
 
+> [!WARNING]
+> When running locally, set a `GITHUB_TOKEN` environment variable to avoid rate limits. Without it, you're limited to 60 API requests per hour. A personal access token with no special scopes is sufficient for public repositories.
+>
+> ```bash
+> export GITHUB_TOKEN=ghp_your_token_here
+> ```
+
 ### Commands
 
 #### `generate`

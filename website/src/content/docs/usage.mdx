@@ -4,6 +4,8 @@ description: The recommended workflow for using gh-actions-lockfile to secure yo
 order: 2
 ---
 
+import GitHubTokenNote from "../../components/docs/GitHubTokenNote.astro";
+
 # Usage
 
 This guide walks through the recommended workflow for integrating gh-actions-lockfile into your project.
@@ -48,6 +50,8 @@ npx gh-actions-lockfile generate
 git add .github/workflows/actions.lock.json
 git commit -m "Add actions lockfile"
 ```
+
+<GitHubTokenNote />
 
 You really only need to generate this initial lockfile once, so choose whichever version makes the most sense.
 

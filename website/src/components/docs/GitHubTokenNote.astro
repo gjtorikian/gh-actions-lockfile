@@ -1,0 +1,11 @@
+---
+import Callout from "./Callout.astro";
+---
+
+<Callout type="warning" title="Authentication Recommended">
+  <p>
+    When running locally, set a <code>GITHUB_TOKEN</code> environment variable to
+    avoid rate limits. Without it, you're limited to 60 API requests per hour.
+  </p>
+  <pre><code>export GITHUB_TOKEN=ghp_your_token_here</code></pre>
+</Callout>
