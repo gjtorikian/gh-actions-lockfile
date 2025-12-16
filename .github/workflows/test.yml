@@ -6,5 +6,7 @@ on:
 jobs:
   test:
     uses: gjtorikian/actions/.github/workflows/bun_test.yml@main
-    secrets: inherit
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
+
 
