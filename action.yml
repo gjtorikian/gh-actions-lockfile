@@ -23,6 +23,10 @@ inputs:
     description: 'Path to lockfile'
     required: false
     default: '.github/workflows/actions.lock.json'
+  comment:
+    description: 'Post a PR comment when verification fails (only in verify mode)'
+    required: false
+    default: 'true'
 
 outputs:
   changed:
@@ -48,10 +52,13 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_EVENT_PATH: ${{ github.event_path }}
       run: |
         bun run ${{ github.action_path }}/src/index.ts ${{ inputs.mode }} \
           --workflows "${{ inputs.workflows }}" \
-          --output "${{ inputs.output }}"
+          --output "${{ inputs.output }}" \
+          ${{ inputs.comment == 'true' && '--comment' || '' }}
 
         # Check if lockfile changed (for generate mode)
         if [ "${{ inputs.mode }}" = "generate" ]; then

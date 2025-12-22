@@ -49,6 +49,7 @@ program
   .description("Verify workflows match the lockfile")
   .option(...workflowsOption)
   .option(...outputOption)
+  .option("-c, --comment", "Post PR comment on verification failure", true)
   .action(async (options) => {
     try {
       await verifyCommand(options);
