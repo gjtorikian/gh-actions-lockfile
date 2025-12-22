@@ -48,13 +48,14 @@ export class Resolver {
     // Resolve the ref to a SHA
     const sha = await this.client.resolveRef(ref.owner, ref.repo, ref.ref);
 
-    // Get integrity hash
-    let integrity = "";
-    try {
-      integrity = await this.client.getArchiveSHA256(ref.owner, ref.repo, sha);
-    } catch (error) {
-      console.log(`  Warning: could not compute integrity hash: ${error}`);
-    }
+    // Get integrity hash and transitive deps in parallel (they're independent)
+    const [integrity, deps] = await Promise.all([
+      this.client.getArchiveSHA256(ref.owner, ref.repo, sha).catch((error) => {
+        console.log(`  Warning: could not compute integrity hash: ${error}`);
+        return "";
+      }),
+      this.findTransitiveDeps(ref, sha),
+    ]);
 
     // Create action entry
     const action: LockedAction = {
@@ -63,9 +64,6 @@ export class Resolver {
       integrity,
       dependencies: [],
     };
-
-    // Try to fetch action.yml and find transitive deps
-    const deps = await this.findTransitiveDeps(ref, sha);
 
     for (const depRef of deps) {
       // Recursively resolve the dependency
