@@ -1,13 +1,13 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
+import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { postOrUpdatePRComment } from "./comment.js";
 import type { VerifyResult } from "../types.js";
 
 // Mock fetch globally
 const originalFetch = globalThis.fetch;
-let mockFetch: ReturnType<typeof mock>;
+let mockFetch: ReturnType<typeof vi.fn>;
 
 function setupMockFetch() {
-  mockFetch = mock(() => Promise.resolve(new Response()));
+  mockFetch = vi.fn(() => Promise.resolve(new Response()));
   globalThis.fetch = mockFetch as unknown as typeof fetch;
 }
 
