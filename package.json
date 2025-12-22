@@ -1,6 +1,6 @@
 {
   "name": "gh-actions-lockfile",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "license": "AGPL-3.0-or-later",
   "description": "Generate and verify lockfiles for GitHub Actions dependencies",
   "author": "Garen Torikian",
