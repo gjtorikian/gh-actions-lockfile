@@ -232,7 +232,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ## Development
 
-Requires [Bun](https://bun.sh) for building:
+Requires Node.js 24+ for building:
 
 ```bash
 # Clone and install
@@ -240,17 +240,17 @@ git clone https://github.com/gjtorikian/gh-actions-lockfile.git
 cd gh-actions-lockfile
 
 # Install dependencies
-bun install
+npm install
 
 # Run in development
-bun run src/index.ts generate
+npm start generate
 
 # Build for distribution
-bun run build
+npm run build
 
 # Type check
-bun run typecheck
+npm run typecheck
 
 # Run tests
-bun test
+npm test
 ```

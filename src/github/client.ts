@@ -1,17 +1,17 @@
 import { createHash } from "node:crypto";
 import type { ActionConfig, FileContent, GitRef, GitTag } from "../types.js";
 import { parse as parseYaml } from "yaml";
-import { createLimiter, type Limiter } from "../utils/limiter.js";
+import pLimit, { type LimitFunction } from "p-limit";
 
 const BASE_URL = "https://api.github.com";
 
 export class GitHubClient {
   private token: string;
-  private limiter: Limiter;
+  private limiter: LimitFunction;
 
   constructor(token?: string, maxConcurrent = 10) {
     this.token = token || process.env.GITHUB_TOKEN || "";
-    this.limiter = createLimiter(maxConcurrent);
+    this.limiter = pLimit(maxConcurrent);
   }
 
   async resolveRef(owner: string, repo: string, ref: string): Promise<string> {
