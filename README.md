@@ -62,6 +62,9 @@ name: Verify Actions
 # change this to whichever events matter to you
 on: [pull_request]
 
+permissions:
+  pull-requests: write
+
 jobs:
   verify-actions:
     runs-on: ubuntu-latest
