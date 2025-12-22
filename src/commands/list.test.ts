@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -92,7 +92,7 @@ describe("list command", () => {
 
     // Should use tree characters
     const hasTreeChars = consoleLogs.some(
-      (log) => log.includes("├──") || log.includes("└──")
+      (log) => log.includes("+--")
     );
     expect(hasTreeChars).toBe(true);
   });

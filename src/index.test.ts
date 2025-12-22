@@ -1,28 +1,35 @@
-import { describe, expect, test, beforeAll, afterAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "vitest";
 import { mkdtemp, rm, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { copyFixture } from "./__fixtures__/helpers.js";
 
-const CLI_PATH = join(import.meta.dir, "index.ts");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CLI_PATH = join(__dirname, "index.ts");
 
 async function runCli(args: string[], cwd?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const proc = Bun.spawn(["bun", "run", CLI_PATH, ...args], {
-    cwd,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: {
-      ...process.env,
-      // Disable GitHub token to avoid real API calls
-      GITHUB_TOKEN: "",
-    },
+  return new Promise((resolve) => {
+    const proc = spawn("npx", ["tsx", CLI_PATH, ...args], {
+      cwd,
+      env: {
+        ...process.env,
+        // Disable GitHub token to avoid real API calls
+        GITHUB_TOKEN: "",
+      },
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout.on("data", (data) => { stdout += data.toString(); });
+    proc.stderr.on("data", (data) => { stderr += data.toString(); });
+
+    proc.on("close", (exitCode) => {
+      resolve({ stdout, stderr, exitCode: exitCode ?? 1 });
+    });
   });
-
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
-  const exitCode = await proc.exited;
-
-  return { stdout, stderr, exitCode };
 }
 
 describe("CLI", () => {

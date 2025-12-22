@@ -185,19 +185,19 @@ Visualizes the actions dependency structure, like:
 ```
 actions.lock.json (generated 2025-12-15 21:57:33)
 
-├── actions/checkout@v6 (8e8c483db84b)
-├── gjtorikian/actions/setup-languages@main (923ecf42f98c)
-│   ├── ruby/setup-ruby@v1 (ac793fdd38cc)
-│   ├── actions/setup-node@v4 (49933ea5288c)
-│   ├── denoland/setup-deno@v1 (11b63cf76cfc)
-│   ├── dtolnay/rust-toolchain@master (0b1efabc08b6)
-│   └── Swatinem/rust-cache@v2 (779680da715d)
-├── actions/cache@v4 (0057852bfaa8)
-├── actions/configure-pages@v4 (1f0c5cde4bc7)
-├── actions/upload-pages-artifact@v3 (56afc609e742)
-│   └── actions/upload-artifact@v4 (ea165f8d65b6)
-├── actions/deploy-pages@v4 (d6db90164ac5)
-└── googleapis/release-please-action@v4 (16a9c90856f4)
++-- actions/checkout@v6 (8e8c483db84b)
++-- gjtorikian/actions/setup-languages@main (923ecf42f98c)
+|   +-- ruby/setup-ruby@v1 (ac793fdd38cc)
+|   +-- actions/setup-node@v4 (49933ea5288c)
+|   +-- denoland/setup-deno@v1 (11b63cf76cfc)
+|   +-- dtolnay/rust-toolchain@master (0b1efabc08b6)
+|   +-- Swatinem/rust-cache@v2 (779680da715d)
++-- actions/cache@v4 (0057852bfaa8)
++-- actions/configure-pages@v4 (1f0c5cde4bc7)
++-- actions/upload-pages-artifact@v3 (56afc609e742)
+|   +-- actions/upload-artifact@v4 (ea165f8d65b6)
++-- actions/deploy-pages@v4 (d6db90164ac5)
++-- googleapis/release-please-action@v4 (16a9c90856f4)
 ```
 
 ### Options
@@ -235,7 +235,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ## Development
 
-Requires [Bun](https://bun.sh) for building:
+Requires Node.js 24+ for building:
 
 ```bash
 # Clone and install
@@ -243,17 +243,17 @@ git clone https://github.com/gjtorikian/gh-actions-lockfile.git
 cd gh-actions-lockfile
 
 # Install dependencies
-bun install
+npm install
 
 # Run in development
-bun run src/index.ts generate
+npm start generate
 
 # Build for distribution
-bun run build
+npm run build
 
 # Type check
-bun run typecheck
+npm run typecheck
 
 # Run tests
-bun test
+npm test
 ```
