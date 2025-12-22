@@ -5,6 +5,11 @@
 
 ### Features
 
+* Add the ability to comment with a diff on action change ([#14](https://github.com/gjtorikian/gh-actions-lockfile/pull/14))
+* Add parallel processing for resolving refs ([#15](https://github.com/gjtorikian/gh-actions-lockfile/pull/15))
+* Dump Bun for easier usage + contributions ([#16](https://github.com/gjtorikian/gh-actions-lockfile/pull/16))
+* Change chars for terminals without Unicode support ([#17](https://github.com/gjtorikian/gh-actions-lockfile/pull/17))
+* Update release workflow to always point to static ref ([#18](https://github.com/gjtorikian/gh-actions-lockfile/pull/18))
 * point vx to latest vx.y.z ([fd75a92](https://github.com/gjtorikian/gh-actions-lockfile/commit/fd75a921ffea2d67c4d232d1a8c86a673688ed72))
 
 ## [1.0.0](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.4...v1.0.0) (2025-12-16)
