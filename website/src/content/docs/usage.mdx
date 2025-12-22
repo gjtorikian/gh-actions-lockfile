@@ -55,7 +55,7 @@ git commit -m "Add actions lockfile"
 
 You really only need to generate this initial lockfile once, so choose whichever version makes the most sense.
 
-## Step 2: Step 2: Verify on Every Action Run
+## Step 2: Verify on Every Action Run
 
 Add verification to your CI workflow. If verification fails, the lockfile is automatically regenerated and committed to the PR:
 
@@ -63,6 +63,9 @@ Add verification to your CI workflow. If verification fails, the lockfile is aut
 name: Verify Actions
 # change this to whichever events matter to you
 on: [pull_request]
+
+permissions:
+  pull-requests: write
 
 jobs:
   verify-actions:
@@ -120,3 +123,19 @@ If `verify` fails, but you didn't change any actions, investigate:
 - **Missing action**: An action was removed from your workflow but is still in the lockfile
 
 For unexpected changes, review the upstream action's commit history before regenerating the lockfile.
+
+## Action Inputs
+
+When using the GitHub Action, you can configure:
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `mode` | Mode to run in: `generate` or `verify` | `verify` |
+| `token` | GitHub token for API access | `${{ github.token }}` |
+| `workflows` | Path to workflows directory | `.github/workflows` |
+| `output` | Path to lockfile | `.github/workflows/actions.lock.json` |
+| `comment` | Post a PR comment when verification fails (only in verify mode) | `true` |
+
+### PR Comments
+
+When `comment` is enabled (the default) and verification fails in a pull request, the action automatically posts a comment detailing what changed. This makes it easy to review lockfile mismatches directly in the PR without checking the action logs.

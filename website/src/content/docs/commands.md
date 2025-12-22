@@ -13,7 +13,7 @@ gh-actions-lockfile provides three main commands for managing your lockfile.
 Generates (or updates) the lockfile from your workflow files. Run this first to create your initial lockfile, and again whenever you intentionally update action versions.
 
 ```bash
-node dist/cli.js generate
+gh-actions-lockfile generate
 ```
 
 This scans all workflow files in `.github/workflows/` and creates `actions.lock.json` with pinned versions for every action, including transitive dependencies from composite actions.
@@ -23,21 +23,30 @@ This scans all workflow files in `.github/workflows/` and creates `actions.lock.
 Verifies that your workflow files match the lockfile. Use this in CI to catch any unexpected changes to your actions.
 
 ```bash
-node dist/cli.js verify
+gh-actions-lockfile verify
 ```
 
-Exit codes:
+**Options**:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --comment` | Post PR comment on verification failure | `true` |
+
+Use `--no-comment` to disable PR comments.
+
+**Exit codes**:
+
 - `0` - All actions match the lockfile
 - `1` - Mismatch detected (action added, removed, or changed)
 
-When verification fails, the output shows exactly what changed.
+When verification fails, the output shows exactly what changed. If running in a PR context with comments enabled, a comment is automatically posted to the PR detailing the mismatches.
 
 ## list
 
 Visualizes the actions dependency structure as a tree. Useful for understanding what actions your workflows depend on, including transitive dependencies.
 
 ```bash
-node dist/cli.js list
+gh-actions-lockfile list
 ```
 
 Example output:
