@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "commander": "^14.0.2",
+    "p-limit": "^7.2.0",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
