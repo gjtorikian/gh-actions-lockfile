@@ -43,7 +43,7 @@ jobs:
         #   git push
 ```
 
-Or, locally with the CLI:
+Or, locally with the CLI (requires [Bun](https://bun.sh)):
 
 ```bash
 npx gh-actions-lockfile generate
