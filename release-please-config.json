@@ -4,7 +4,8 @@
     ".": {
       "release-type": "node",
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false
+      "include-component-in-tag": false,
+      "changelog-type": "github"
     }
   }
 }
