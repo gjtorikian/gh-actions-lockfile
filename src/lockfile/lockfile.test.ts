@@ -13,7 +13,7 @@ import type { Lockfile, Workflow, VerifyResult } from "../types.js";
 
 describe("DEFAULT_PATH", () => {
   test("has correct default path", () => {
-    expect(DEFAULT_PATH).toBe(".github/workflows/actions.lock.json");
+    expect(DEFAULT_PATH).toBe(".github/actions.lock.json");
   });
 });
 

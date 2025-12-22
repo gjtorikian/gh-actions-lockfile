@@ -38,7 +38,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         # or, something like
         # run: |
-        #   git add .github/workflows/actions.lock.json
+        #   git add .github/actions.lock.json
         #   git commit -m "Add actions lockfile"
         #   git push
 ```
@@ -47,7 +47,7 @@ Or, locally with the CLI:
 
 ```bash
 npx gh-actions-lockfile generate
-git add .github/workflows/actions.lock.json
+git add .github/actions.lock.json
 git commit -m "Add actions lockfile"
 ```
 
@@ -95,7 +95,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update actions lockfile"
-          file_pattern: ".github/workflows/actions.lock.json"
+          file_pattern: ".github/actions.lock.json"
 ```
 
 When you update an action version (e.g., `actions/checkout@v4` to `@v5`), _or if the action ref changes_ outside of your control, the verify job will fail, triggering the update job to regenerate and commit the lockfile to your PR automatically.
@@ -141,7 +141,7 @@ Add this action to your workflow to verify the lockfile:
 | `mode` | Mode to run in: `generate` or `verify` | `verify` |
 | `token` | GitHub token for API access | `${{ github.token }}` |
 | `workflows` | Path to workflows directory | `.github/workflows` |
-| `output` | Path to lockfile | `.github/workflows/actions.lock.json` |
+| `output` | Path to lockfile | `.github/actions.lock.json` |
 | `comment` | Post a PR comment when verification fails (verify mode only) | `true` |
 
 When `comment` is enabled and verification fails in a pull request, the action posts a comment detailing what changed.
@@ -218,7 +218,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ```
 -w, --workflows <path>  Path to workflows directory (default: .github/workflows)
--o, --output <path>     Path to lockfile (default: .github/workflows/actions.lock.json)
+-o, --output <path>     Path to lockfile (default: .github/actions.lock.json)
 -t, --token <token>     GitHub token (or use GITHUB_TOKEN env var)
 ```
 

@@ -22,7 +22,7 @@ inputs:
   output:
     description: 'Path to lockfile'
     required: false
-    default: '.github/workflows/actions.lock.json'
+    default: '.github/actions.lock.json'
   comment:
     description: 'Post a PR comment when verification fails (only in verify mode)'
     required: false
