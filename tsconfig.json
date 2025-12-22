@@ -17,7 +17,7 @@
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "types": [
-      "bun"
+      "node"
     ]
   },
   "include": [

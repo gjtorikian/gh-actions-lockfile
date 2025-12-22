@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 import { Command } from "commander";
 import { generate } from "./commands/generate.js";
 import { verifyCommand } from "./commands/verify.js";

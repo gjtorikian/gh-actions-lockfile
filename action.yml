@@ -32,16 +32,8 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
-      with:
-        bun-version: latest
-        cache: true
-
-    - name: Install dependencies
-      shell: bash
-      working-directory: ${{ github.action_path }}
-      run: bun install --frozen-lockfile
+    - name: Setup Node.js
+      uses: gjtorikian/actions/setup-languages/node@main
 
     - name: Run gh-actions-lockfile
       id: run
@@ -49,7 +41,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
-        bun run ${{ github.action_path }}/src/index.ts ${{ inputs.mode }} \
+        npx tsx ${{ github.action_path }}/src/index.ts ${{ inputs.mode }} \
           --workflows "${{ inputs.workflows }}" \
           --output "${{ inputs.output }}"
 
