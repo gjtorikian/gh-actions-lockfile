@@ -142,7 +142,12 @@ function formatComment(result: VerifyResult): string {
     lines.push("### New Actions");
     lines.push("");
     for (const action of result.newActions) {
-      lines.push(`- \`${action.action}@${action.newVersion}\``);
+      const repoLink = buildRepoLink(action.action);
+      if (repoLink) {
+        lines.push(`- \`${action.action}@${action.newVersion}\` ([view repo](${repoLink}))`);
+      } else {
+        lines.push(`- \`${action.action}@${action.newVersion}\``);
+      }
     }
     lines.push("");
   }
@@ -224,4 +229,20 @@ function buildCommitLink(change: ChangeInfo): string | null {
   const repo = parts[1];
 
   return `https://github.com/${owner}/${repo}/commit/${change.oldSha}`;
+}
+
+/**
+ * Builds a GitHub repo URL for an action.
+ * Returns null if action format is invalid.
+ */
+function buildRepoLink(action: string): string | null {
+  const parts = action.split("/");
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const owner = parts[0];
+  const repo = parts[1];
+
+  return `https://github.com/${owner}/${repo}`;
 }
