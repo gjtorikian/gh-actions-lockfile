@@ -119,11 +119,11 @@ function findTopLevelActions(lockfile: Lockfile): TopLevelAction[] {
 
 export function printVerifyResult(result: VerifyResult): void {
   if (result.match) {
-    console.log("✓ Lockfile is up to date");
+    console.log("Lockfile is up to date");
     return;
   }
 
-  console.log("✗ Lockfile mismatch detected\n");
+  console.log("Lockfile mismatch detected\n");
 
   if (result.newActions.length > 0) {
     console.log("New actions (not in lockfile):");
