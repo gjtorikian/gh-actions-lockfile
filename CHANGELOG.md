@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 (2025-12-22)
+
+**Full Changelog**: https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.1.0...v1.1.1
+
 ## [1.1.0](https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.0.0...v1.1.0) (2025-12-22)
 
 
