@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
+import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { Resolver } from "./resolver.js";
 import { GitHubClient } from "../github/client.js";
 import type { ActionRef, ActionConfig } from "../types.js";
@@ -6,9 +6,9 @@ import type { ActionRef, ActionConfig } from "../types.js";
 // Mock GitHubClient
 function createMockClient(overrides: Partial<GitHubClient> = {}): GitHubClient {
   const mockClient = {
-    resolveRef: mock(() => Promise.resolve("abc123def456abc123def456abc123def456abc123")),
-    getActionConfig: mock(() => Promise.resolve(null)),
-    getArchiveSHA256: mock(() => Promise.resolve("sha256-mockhash123")),
+    resolveRef: vi.fn(() => Promise.resolve("abc123def456abc123def456abc123def456abc123")),
+    getActionConfig: vi.fn(() => Promise.resolve(null)),
+    getArchiveSHA256: vi.fn(() => Promise.resolve("sha256-mockhash123")),
     ...overrides,
   } as unknown as GitHubClient;
   return mockClient;
@@ -56,8 +56,8 @@ describe("Resolver", () => {
       const integrity = "sha256-abc123xyz";
 
       const mockClient = createMockClient({
-        resolveRef: mock(() => Promise.resolve(sha)),
-        getArchiveSHA256: mock(() => Promise.resolve(integrity)),
+        resolveRef: vi.fn(() => Promise.resolve(sha)),
+        getArchiveSHA256: vi.fn(() => Promise.resolve(integrity)),
       });
       const resolver = new Resolver(mockClient);
 
@@ -96,10 +96,10 @@ describe("Resolver", () => {
 
     test("resolves multiple versions of the same action", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string, ref: string) =>
+        resolveRef: vi.fn((owner: string, repo: string, ref: string) =>
           Promise.resolve(`sha-${ref}`)
         ),
-        getArchiveSHA256: mock((owner: string, repo: string, sha: string) =>
+        getArchiveSHA256: vi.fn((owner: string, repo: string, sha: string) =>
           Promise.resolve(`integrity-${sha}`)
         ),
       });
@@ -142,7 +142,7 @@ describe("Resolver", () => {
     test("skips already-visited actions", async () => {
       let resolveRefCallCount = 0;
       const mockClient = createMockClient({
-        resolveRef: mock(() => {
+        resolveRef: vi.fn(() => {
           resolveRefCallCount++;
           return Promise.resolve("abc123");
         }),
@@ -179,8 +179,8 @@ describe("Resolver", () => {
       let depth = 0;
 
       const mockClient = createMockClient({
-        resolveRef: mock(() => Promise.resolve(`sha-depth-${depth++}`)),
-        getActionConfig: mock(
+        resolveRef: vi.fn(() => Promise.resolve(`sha-depth-${depth++}`)),
+        getActionConfig: vi.fn(
           (owner: string, repo: string): Promise<ActionConfig | null> => {
             // Each action depends on the next in a chain
             const currentDepth = parseInt(repo.split("-")[1] || "0");
@@ -222,10 +222,10 @@ describe("Resolver", () => {
   describe("resolveAction (transitive deps)", () => {
     test("resolves transitive deps from composite actions", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string) =>
+        resolveRef: vi.fn((owner: string, repo: string) =>
           Promise.resolve(`sha-${owner}-${repo}`)
         ),
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string): Promise<ActionConfig | null> => {
             if (owner === "owner" && repo === "composite") {
               return Promise.resolve({
@@ -271,7 +271,7 @@ describe("Resolver", () => {
   describe("findTransitiveDeps", () => {
     test("returns empty for non-composite actions", async () => {
       const mockClient = createMockClient({
-        getActionConfig: mock(() =>
+        getActionConfig: vi.fn(() =>
           Promise.resolve({
             name: "Node Action",
             runs: {
@@ -302,10 +302,10 @@ describe("Resolver", () => {
 
     test("extracts deps from composite action steps", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string) =>
+        resolveRef: vi.fn((owner: string, repo: string) =>
           Promise.resolve(`sha-${owner}-${repo}`)
         ),
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string): Promise<ActionConfig | null> => {
             if (owner === "owner" && repo === "composite") {
               return Promise.resolve({
@@ -344,7 +344,7 @@ describe("Resolver", () => {
 
     test("skips local (./) actions in composite", async () => {
       const mockClient = createMockClient({
-        getActionConfig: mock(() =>
+        getActionConfig: vi.fn(() =>
           Promise.resolve({
             name: "Composite",
             runs: {
@@ -378,7 +378,7 @@ describe("Resolver", () => {
 
     test("skips docker:// refs in composite", async () => {
       const mockClient = createMockClient({
-        getActionConfig: mock(() =>
+        getActionConfig: vi.fn(() =>
           Promise.resolve({
             name: "Composite",
             runs: {
@@ -414,8 +414,8 @@ describe("Resolver", () => {
   describe("integrity hash handling", () => {
     test("handles integrity hash errors gracefully", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock(() => Promise.resolve("abc123")),
-        getArchiveSHA256: mock(() =>
+        resolveRef: vi.fn(() => Promise.resolve("abc123")),
+        getArchiveSHA256: vi.fn(() =>
           Promise.reject(new Error("Rate limited"))
         ),
       });
@@ -462,10 +462,10 @@ describe("Resolver", () => {
   describe("reusable workflows", () => {
     test("extracts deps from reusable workflow jobs", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string) =>
+        resolveRef: vi.fn((owner: string, repo: string) =>
           Promise.resolve(`sha-${owner}-${repo}`)
         ),
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
             if (path === ".github/workflows/reusable.yml") {
               return Promise.resolve({
@@ -508,10 +508,10 @@ describe("Resolver", () => {
 
     test("extracts deps from nested reusable workflow calls", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string) =>
+        resolveRef: vi.fn((owner: string, repo: string) =>
           Promise.resolve(`sha-${owner}-${repo}`)
         ),
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
             if (path === ".github/workflows/parent.yml") {
               return Promise.resolve({
@@ -550,10 +550,10 @@ describe("Resolver", () => {
 
     test("extracts deps from multiple jobs in reusable workflow", async () => {
       const mockClient = createMockClient({
-        resolveRef: mock((owner: string, repo: string) =>
+        resolveRef: vi.fn((owner: string, repo: string) =>
           Promise.resolve(`sha-${owner}-${repo}`)
         ),
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
             if (path === ".github/workflows/multi.yml") {
               return Promise.resolve({
@@ -600,7 +600,7 @@ describe("Resolver", () => {
 
     test("skips local reusable workflow calls in jobs", async () => {
       const mockClient = createMockClient({
-        getActionConfig: mock(
+        getActionConfig: vi.fn(
           (owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null> => {
             if (path === ".github/workflows/test.yml") {
               return Promise.resolve({

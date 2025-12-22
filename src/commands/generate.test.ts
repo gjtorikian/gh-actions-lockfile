@@ -1,5 +1,5 @@
-import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach, mock } from "bun:test";
-import { mkdtemp, rm, mkdir, readFile } from "node:fs/promises";
+import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
+import { mkdtemp, rm, mkdir, readFile, access } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { generate } from "./generate.js";
@@ -10,7 +10,7 @@ const originalFetch = globalThis.fetch;
 
 function setupMockFetch() {
   const sha = "b4ffde65f46336ab88eb53be808477a3936bae11";
-  const mockFetch = mock((url: string) => {
+  const mockFetch = vi.fn((url: string) => {
     // Mock tag resolution
     if (url.includes("/git/refs/tags/")) {
       return Promise.resolve(
@@ -134,7 +134,12 @@ describe("generate command", () => {
     });
 
     // No lockfile should be created (early return before writing)
-    const exists = await Bun.file(outputPath).exists();
+    let exists = true;
+    try {
+      await access(outputPath);
+    } catch {
+      exists = false;
+    }
     expect(exists).toBe(false);
   });
 

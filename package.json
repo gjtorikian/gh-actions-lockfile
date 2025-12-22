@@ -37,24 +37,27 @@
     "gh-actions-lockfile": "./dist/cli.js"
   },
   "scripts": {
-    "start": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outfile dist/cli.js --target node && tsc --emitDeclarationOnly",
+    "start": "tsx src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/cli.js --format=esm --banner:js='#!/usr/bin/env node' && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "vitest run",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "package": "bun run build && bun pm pack",
-    "docs:dev": "bun run --filter gh-actions-lockfile-website dev",
-    "docs:build": "bun run --filter gh-actions-lockfile-website build",
-    "docs:preview": "bun run --filter gh-actions-lockfile-website preview"
+    "package": "npm run build && npm pack",
+    "docs:dev": "npm run --workspace=gh-actions-lockfile-website dev",
+    "docs:build": "npm run --workspace=gh-actions-lockfile-website build",
+    "docs:preview": "npm run --workspace=gh-actions-lockfile-website preview"
   },
   "dependencies": {
     "commander": "^14.0.2",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.0",
     "oxlint": "^1.33.0",
-    "typescript": "^5.7.2"
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
   }
 }
