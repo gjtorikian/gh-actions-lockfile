@@ -31,32 +31,7 @@ inputs:
 outputs:
   changed:
     description: 'Whether the lockfile changed (for generate mode)'
-    value: ${{ steps.run.outputs.changed }}
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Setup Node.js
-      uses: gjtorikian/actions/setup-languages/node@main
-
-    - name: Run gh-actions-lockfile
-      id: run
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.token }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_EVENT_PATH: ${{ github.event_path }}
-      run: |
-        npx tsx ${{ github.action_path }}/src/index.ts ${{ inputs.mode }} \
-          --workflows "${{ inputs.workflows }}" \
-          --output "${{ inputs.output }}" \
-          ${{ inputs.comment == 'true' && '--comment' || '' }}
-
-        # Check if lockfile changed (for generate mode)
-        if [ "${{ inputs.mode }}" = "generate" ]; then
-          if git diff --quiet "${{ inputs.output }}" 2>/dev/null; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-        fi
+  using: 'node24'
+  main: 'dist/index.js'
