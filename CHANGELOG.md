@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.0.0...v1.1.0) (2025-12-22)
+
+
+### Features
+
+* point vx to latest vx.y.z ([fd75a92](https://github.com/gjtorikian/gh-actions-lockfile/commit/fd75a921ffea2d67c4d232d1a8c86a673688ed72))
+
 ## [1.0.0](https://github.com/gjtorikian/gh-actions-lockfile/compare/v0.0.4...v1.0.0) (2025-12-16)
 
 
