@@ -62,6 +62,9 @@ name: Verify Actions
 # change this to whichever events matter to you
 on: [pull_request]
 
+permissions:
+  pull-requests: write
+
 jobs:
   verify-actions:
     runs-on: ubuntu-latest
@@ -131,6 +134,18 @@ Add this action to your workflow to verify the lockfile:
     mode: verify # or 'generate'
 ```
 
+**Action inputs**:
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `mode` | Mode to run in: `generate` or `verify` | `verify` |
+| `token` | GitHub token for API access | `${{ github.token }}` |
+| `workflows` | Path to workflows directory | `.github/workflows` |
+| `output` | Path to lockfile | `.github/workflows/actions.lock.json` |
+| `comment` | Post a PR comment when verification fails (verify mode only) | `true` |
+
+When `comment` is enabled and verification fails in a pull request, the action posts a comment detailing what changed.
+
 ### Via the CLI
 
 Install globally via npm:
@@ -199,11 +214,21 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ### Options
 
+**Global options** (available on all commands):
+
 ```
 -w, --workflows <path>  Path to workflows directory (default: .github/workflows)
 -o, --output <path>     Path to lockfile (default: .github/workflows/actions.lock.json)
 -t, --token <token>     GitHub token (or use GITHUB_TOKEN env var)
 ```
+
+**verify options**:
+
+```
+-c, --comment           Post PR comment on verification failure (default: true)
+```
+
+Use `--no-comment` to disable PR comments when running in CI.
 
 ## Lockfile Format
 

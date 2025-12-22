@@ -14,9 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
-      paths_released: ${{ steps.release.outputs.paths_released }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-dist:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Set up Node.js
+        uses: gjtorikian/actions/setup-languages/node@main
+
+      - run: npm run build
+
+      - name: Commit dist to tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f dist/
+          git diff --cached --quiet || git commit -m "chore: build dist for ${{ needs.release-please.outputs.tag_name }}"
+          git tag -f ${{ needs.release-please.outputs.tag_name }}
+          git push origin ${{ needs.release-please.outputs.tag_name }} --force
