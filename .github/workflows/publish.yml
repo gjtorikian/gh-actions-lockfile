@@ -7,7 +7,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -27,3 +27,44 @@ jobs:
 
       - name: Publish package
         run: npm publish --provenance --access public
+
+  update-major-tag:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Update major version tag
+        run: |
+          # Get the latest version tag
+          VERSION=$(git describe --tags --abbrev=0 --match "v*.*.*" 2>/dev/null || echo "")
+
+          if [ -z "$VERSION" ]; then
+            echo "No version tag found"
+            exit 1
+          fi
+
+          # Extract major version (v1.2.3 -> v1)
+          MAJOR=$(echo "$VERSION" | grep -oE '^v[0-9]+')
+
+          if [ -z "$MAJOR" ]; then
+            echo "Could not extract major version from: $VERSION"
+            exit 1
+          fi
+
+          echo "Updating $MAJOR tag to point to $VERSION"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Delete remote major tag if it exists
+          git push origin ":refs/tags/$MAJOR" 2>/dev/null || true
+
+          # Create and push major tag at the same commit as VERSION
+          git tag -f "$MAJOR" "$VERSION"
+          git push origin "$MAJOR"
+
+          echo "Successfully updated $MAJOR to point to $VERSION ($(git rev-list -1 $VERSION))"
