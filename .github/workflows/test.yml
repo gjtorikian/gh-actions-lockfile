@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    uses: gjtorikian/actions/.github/workflows/bun_test.yml@main
+    uses: gjtorikian/actions/.github/workflows/node_test.yml@main
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
 

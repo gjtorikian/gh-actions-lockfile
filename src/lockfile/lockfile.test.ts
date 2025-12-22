@@ -1,5 +1,5 @@
-import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -44,7 +44,7 @@ describe("readLockfile", () => {
         ],
       },
     };
-    await Bun.write(lockfilePath, JSON.stringify(lockfile));
+    await writeFile(lockfilePath, JSON.stringify(lockfile));
 
     const result = await readLockfile(lockfilePath);
     expect(result).toEqual(lockfile);

@@ -19,16 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Bun
-        uses: gjtorikian/actions/setup-languages/bun@main
+      - name: Set up Node.js
+        uses: gjtorikian/actions/setup-languages/node@main
 
-      - name: Set up Node (for npm publish with OIDC)
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-
-      - run: bun run package --if-present
+      - name: Build package
+        run: npm run package
 
       - name: Publish package
         run: npm publish --provenance --access public

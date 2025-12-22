@@ -65,8 +65,8 @@ function printAction(
   prefix: string,
   last: boolean
 ): void {
-  const branch = last ? "└── " : "├── ";
-  const childPrefix = last ? "    " : "│   ";
+  const branch = last ? "+-- " : "+-- ";
+  const childPrefix = last ? "    " : "|   ";
 
   const sha = action.sha.slice(0, 12);
   console.log(`${prefix}${branch}${name}@${action.version} (${sha})`);

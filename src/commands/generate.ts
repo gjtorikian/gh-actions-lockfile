@@ -48,6 +48,6 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
   await writeLockfile(lockfile, outputPath);
 
-  console.log(`\n✓ Lockfile written to ${outputPath}`);
+  console.log(`\nLockfile written to ${outputPath}`);
   console.log(`  ${Object.keys(lockfile.actions).length} action(s) locked`);
 }

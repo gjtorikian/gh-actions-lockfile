@@ -43,7 +43,7 @@ jobs:
         #   git push
 ```
 
-Or, locally with the CLI (requires [Bun](https://bun.sh)):
+Or, locally with the CLI:
 
 ```bash
 npx gh-actions-lockfile generate
@@ -61,6 +61,9 @@ Add verification to your CI workflow. If verification fails, the lockfile is aut
 name: Verify Actions
 # change this to whichever events matter to you
 on: [pull_request]
+
+permissions:
+  pull-requests: write
 
 jobs:
   verify-actions:
@@ -131,6 +134,18 @@ Add this action to your workflow to verify the lockfile:
     mode: verify # or 'generate'
 ```
 
+**Action inputs**:
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `mode` | Mode to run in: `generate` or `verify` | `verify` |
+| `token` | GitHub token for API access | `${{ github.token }}` |
+| `workflows` | Path to workflows directory | `.github/workflows` |
+| `output` | Path to lockfile | `.github/workflows/actions.lock.json` |
+| `comment` | Post a PR comment when verification fails (verify mode only) | `true` |
+
+When `comment` is enabled and verification fails in a pull request, the action posts a comment detailing what changed.
+
 ### Via the CLI
 
 Install globally via npm:
@@ -182,28 +197,38 @@ Visualizes the actions dependency structure, like:
 ```
 actions.lock.json (generated 2025-12-15 21:57:33)
 
-├── actions/checkout@v6 (8e8c483db84b)
-├── gjtorikian/actions/setup-languages@main (923ecf42f98c)
-│   ├── ruby/setup-ruby@v1 (ac793fdd38cc)
-│   ├── actions/setup-node@v4 (49933ea5288c)
-│   ├── denoland/setup-deno@v1 (11b63cf76cfc)
-│   ├── dtolnay/rust-toolchain@master (0b1efabc08b6)
-│   └── Swatinem/rust-cache@v2 (779680da715d)
-├── actions/cache@v4 (0057852bfaa8)
-├── actions/configure-pages@v4 (1f0c5cde4bc7)
-├── actions/upload-pages-artifact@v3 (56afc609e742)
-│   └── actions/upload-artifact@v4 (ea165f8d65b6)
-├── actions/deploy-pages@v4 (d6db90164ac5)
-└── googleapis/release-please-action@v4 (16a9c90856f4)
++-- actions/checkout@v6 (8e8c483db84b)
++-- gjtorikian/actions/setup-languages@main (923ecf42f98c)
+|   +-- ruby/setup-ruby@v1 (ac793fdd38cc)
+|   +-- actions/setup-node@v4 (49933ea5288c)
+|   +-- denoland/setup-deno@v1 (11b63cf76cfc)
+|   +-- dtolnay/rust-toolchain@master (0b1efabc08b6)
+|   +-- Swatinem/rust-cache@v2 (779680da715d)
++-- actions/cache@v4 (0057852bfaa8)
++-- actions/configure-pages@v4 (1f0c5cde4bc7)
++-- actions/upload-pages-artifact@v3 (56afc609e742)
+|   +-- actions/upload-artifact@v4 (ea165f8d65b6)
++-- actions/deploy-pages@v4 (d6db90164ac5)
++-- googleapis/release-please-action@v4 (16a9c90856f4)
 ```
 
 ### Options
+
+**Global options** (available on all commands):
 
 ```
 -w, --workflows <path>  Path to workflows directory (default: .github/workflows)
 -o, --output <path>     Path to lockfile (default: .github/workflows/actions.lock.json)
 -t, --token <token>     GitHub token (or use GITHUB_TOKEN env var)
 ```
+
+**verify options**:
+
+```
+-c, --comment           Post PR comment on verification failure (default: true)
+```
+
+Use `--no-comment` to disable PR comments when running in CI.
 
 ## Lockfile Format
 
@@ -232,7 +257,7 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 ## Development
 
-Requires [Bun](https://bun.sh) for building:
+Requires Node.js 24+ for building:
 
 ```bash
 # Clone and install
@@ -240,17 +265,17 @@ git clone https://github.com/gjtorikian/gh-actions-lockfile.git
 cd gh-actions-lockfile
 
 # Install dependencies
-bun install
+npm install
 
 # Run in development
-bun run src/index.ts generate
+npm start generate
 
 # Build for distribution
-bun run build
+npm run build
 
 # Type check
-bun run typecheck
+npm run typecheck
 
 # Run tests
-bun test
+npm test
 ```

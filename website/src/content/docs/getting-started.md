@@ -30,6 +30,27 @@ Add verification to your CI workflow:
     mode: verify # or 'generate'
 ```
 
+#### Permissions for PR Comments
+
+When using `verify` mode with the `comment: true` option (default), the action posts a comment on pull requests if verification fails. This requires write permissions:
+
+```yaml
+permissions:
+  pull-requests: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: gjtorikian/gh-actions-lockfile@v1
+        with:
+          mode: verify
+```
+
+Without these permissions, you'll see: `Resource not accessible by integration`.
+
 ### Option 2: Via the CLI
 
 Install globally via npm:

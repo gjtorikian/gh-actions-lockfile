@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 import { Command } from "commander";
 import { generate } from "./commands/generate.js";
 import { verifyCommand } from "./commands/verify.js";
@@ -49,6 +48,7 @@ program
   .description("Verify workflows match the lockfile")
   .option(...workflowsOption)
   .option(...outputOption)
+  .option("-c, --comment", "Post PR comment on verification failure", true)
   .action(async (options) => {
     try {
       await verifyCommand(options);
