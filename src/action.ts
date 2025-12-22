@@ -10,7 +10,7 @@ async function run(): Promise<void> {
     const mode = core.getInput("mode", { required: true });
     const token = core.getInput("token") || undefined;
     const workflows = core.getInput("workflows") || ".github/workflows";
-    const output = core.getInput("output") || ".github/workflows/actions.lock.json";
+    const output = core.getInput("output") || ".github/actions.lock.json";
     const comment = core.getInput("comment") === "true";
 
     if (token) {

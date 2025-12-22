@@ -3,7 +3,7 @@ import { dirname } from "node:path";
 import type { Lockfile, VerifyResult, Workflow } from "../types.js";
 import { extractActionRefs, getFullName, parseActionRef } from "../parser/workflow.js";
 
-export const DEFAULT_PATH = ".github/workflows/actions.lock.json";
+export const DEFAULT_PATH = ".github/actions.lock.json";
 
 export async function readLockfile(path: string): Promise<Lockfile> {
   try {
