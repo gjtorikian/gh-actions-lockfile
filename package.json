@@ -45,7 +45,7 @@
     "start": "tsx src/index.ts",
     "build": "ncc build src/action.ts -o dist -t -m && esbuild src/index.ts --bundle --platform=node --target=node24 --alias:yaml=./node_modules/yaml/browser/index.js --outfile=dist/cli.js --format=esm --minify --banner:js='#!/usr/bin/env node' && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "lint": "oxlint --ignore-pattern 'dist/**'",
     "lint:fix": "oxlint --fix --ignore-pattern 'dist/**'",
     "package": "npm run build && npm pack",

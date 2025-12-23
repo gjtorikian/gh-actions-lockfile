@@ -34,6 +34,11 @@ const generateCommand = command(
         alias: "t",
         description: "GitHub token (or use GITHUB_TOKEN env var)",
       },
+      requireSha: {
+        type: Boolean,
+        description: "Require all action refs to be full SHAs (40 hex chars)",
+        default: false,
+      },
     },
   },
   async (argv) => {
@@ -59,6 +64,26 @@ const verifyCommandDef = command(
         alias: "c",
         description: "Post PR comment on verification failure",
         default: true,
+      },
+      skipSha: {
+        type: Boolean,
+        description: "Skip SHA resolution verification",
+        default: false,
+      },
+      skipIntegrity: {
+        type: Boolean,
+        description: "Skip integrity hash verification",
+        default: false,
+      },
+      checkAdvisories: {
+        type: Boolean,
+        description: "Check for security advisories (default: true)",
+        default: true,
+      },
+      token: {
+        type: String,
+        alias: "t",
+        description: "GitHub token (or use GITHUB_TOKEN env var)",
       },
     },
   },
