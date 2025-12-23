@@ -23,17 +23,9 @@ jobs:
 
   point_to_latest:
     needs: node
-    if: ${{ needs.node.outputs.major != '' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Update major version tag
         run: |
-          git tag -f "v${{ needs.node.outputs.major }}"
-          git push origin "v${{ needs.node.outputs.major }}" --force
+          git tag -f "v${{ steps.version.outputs.major }}"
+          git push origin "v${{ steps.version.outputs.major }}" --force
