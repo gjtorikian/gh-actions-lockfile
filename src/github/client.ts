@@ -4,14 +4,59 @@ import { parse as parseYaml } from "yaml";
 import pLimit, { type LimitFunction } from "p-limit";
 
 const BASE_URL = "https://api.github.com";
+const GRAPHQL_URL = "https://api.github.com/graphql";
+
+export interface Advisory {
+  ghsaId: string;
+  severity: "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
+  summary: string;
+  vulnerableVersionRange: string;
+  permalink: string;
+}
+
+interface PRComment {
+  id: number;
+  body: string;
+}
+
+interface GraphQLSecurityVulnerability {
+  advisory: {
+    ghsaId: string;
+    summary: string;
+    severity: string;
+    permalink: string;
+  };
+  vulnerableVersionRange: string;
+}
+
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
 
 export class GitHubClient {
   private token: string;
   private limiter: LimitFunction;
+  private owner?: string;
+  private repo?: string;
 
-  constructor(token?: string, maxConcurrent = 10) {
+  constructor(token?: string, maxConcurrent = 10, owner?: string, repo?: string) {
     this.token = token || process.env.GITHUB_TOKEN || "";
     this.limiter = pLimit(maxConcurrent);
+    this.owner = owner;
+    this.repo = repo;
+  }
+
+  getToken(): string {
+    return this.token;
+  }
+
+  getOwner(): string | undefined {
+    return this.owner;
+  }
+
+  getRepo(): string | undefined {
+    return this.repo;
   }
 
   async resolveRef(owner: string, repo: string, ref: string): Promise<string> {
@@ -155,5 +200,133 @@ export class GitHubClient {
     }
 
     return this.limiter(() => fetch(url, { headers }));
+  }
+
+  private async post(url: string, body: unknown, method: "POST" | "PATCH" = "POST"): Promise<Response> {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+    };
+
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    // Build options separately to satisfy eslint-plugin-unicorn/no-invalid-fetch-options
+    // which doesn't understand that `method` is typed to only allow POST/PATCH
+    const options: RequestInit = { method, headers };
+    if (body !== undefined) {
+      options.body = JSON.stringify(body);
+    }
+    return this.limiter(() => fetch(url, options));
+  }
+
+  private async graphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+    const response = await this.post(GRAPHQL_URL, { query, variables });
+
+    if (!response.ok) {
+      throw new Error(`GraphQL request failed: ${response.status}`);
+    }
+
+    const result = (await response.json()) as GraphQLResponse<T>;
+
+    if (result.errors && result.errors.length > 0) {
+      const firstError = result.errors[0]!;
+      throw new Error(firstError.message);
+    }
+
+    if (!result.data) {
+      throw new Error("GraphQL response missing data");
+    }
+
+    return result.data;
+  }
+
+  // PR Comment methods
+
+  async findPRComment(prNumber: number, marker: string): Promise<PRComment | null> {
+    if (!this.owner || !this.repo) {
+      throw new Error("Repository context not available (GITHUB_REPOSITORY not set)");
+    }
+
+    const url = `${BASE_URL}/repos/${this.owner}/${this.repo}/issues/${prNumber}/comments`;
+    const comments = await this.get<PRComment[]>(url);
+
+    for (const comment of comments) {
+      if (comment.body.includes(marker)) {
+        return comment;
+      }
+    }
+
+    return null;
+  }
+
+  async createPRComment(prNumber: number, body: string): Promise<void> {
+    if (!this.owner || !this.repo) {
+      throw new Error("Repository context not available (GITHUB_REPOSITORY not set)");
+    }
+
+    const url = `${BASE_URL}/repos/${this.owner}/${this.repo}/issues/${prNumber}/comments`;
+    const response = await this.post(url, { body });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Failed to create comment: ${response.status} ${errorBody}`);
+    }
+  }
+
+  async updatePRComment(commentId: number, body: string): Promise<void> {
+    if (!this.owner || !this.repo) {
+      throw new Error("Repository context not available (GITHUB_REPOSITORY not set)");
+    }
+
+    const url = `${BASE_URL}/repos/${this.owner}/${this.repo}/issues/comments/${commentId}`;
+    const response = await this.post(url, { body }, "PATCH");
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Failed to update comment: ${response.status} ${errorBody}`);
+    }
+  }
+
+  // Security Advisory methods
+
+  async checkActionAdvisories(actionName: string): Promise<Advisory[]> {
+    const query = `
+      query($package: String!) {
+        securityVulnerabilities(
+          ecosystem: ACTIONS,
+          package: $package,
+          first: 10
+        ) {
+          nodes {
+            advisory {
+              ghsaId
+              summary
+              severity
+              permalink
+            }
+            vulnerableVersionRange
+          }
+        }
+      }
+    `;
+
+    interface AdvisoryData {
+      securityVulnerabilities?: {
+        nodes: GraphQLSecurityVulnerability[];
+      };
+    }
+
+    const data = await this.graphql<AdvisoryData>(query, { package: actionName });
+    const nodes = data.securityVulnerabilities?.nodes || [];
+
+    return nodes.map((node) => ({
+      ghsaId: node.advisory.ghsaId,
+      severity: node.advisory.severity as Advisory["severity"],
+      summary: node.advisory.summary,
+      vulnerableVersionRange: node.vulnerableVersionRange,
+      permalink: node.advisory.permalink,
+    }));
   }
 }

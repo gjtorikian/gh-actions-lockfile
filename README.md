@@ -118,9 +118,70 @@ If `verify` fails, but you didn't change any actions, investigate:
 
 - **New dependency detected**: A composite action you use added a new transitive dependency
 - **SHA mismatch**: An upstream maintainer force-pushed or retagged a version (this is a potential supply chain concern)
+- **Integrity mismatch**: The tarball content has changed for the same SHA (rare, but a serious supply chain concern)
 - **Missing action**: An action was removed from your workflow but is still in the lockfile
 
 For unexpected changes, review the upstream action's commit history before regenerating the lockfile.
+
+## Security Features
+
+### SHA Verification
+
+When you run `verify`, the tool checks that all locked action refs still resolve to the same commit SHAs. This detects if an upstream maintainer has re-pointed a tag to a different commit (a supply chain concern known as "tag hijacking").
+
+To skip SHA verification, use `--skip-sha`:
+
+```bash
+gh-actions-lockfile verify --skip-sha
+```
+
+### Integrity Verification
+
+The `verify` command also:
+
+1. Re-downloads each action's tarball from GitHub
+2. Computes the SHA256 hash of the tarball
+3. Compares it against the stored `integrity` hash in your lockfile
+
+If any hash mismatches, verification fails. This detects if an action's content has been modified after your lockfile was generated—even if the commit SHA hasn't changed.
+
+To skip integrity checking (e.g., for faster CI runs), use `--skip-integrity`:
+
+```bash
+gh-actions-lockfile verify --skip-integrity
+```
+
+### Security Advisory Checking
+
+By default, the `verify` command checks your locked actions against the [GitHub Advisory Database](https://github.com/advisories) for known vulnerabilities.
+
+When vulnerabilities are found, they are reported as failures:
+
+```
+Checking security advisories...
+actions/cache@v3
+  GHSA-xxxx-yyyy-zzzz (HIGH)
+  Cache poisoning vulnerability in versions < 3.2.0
+  https://github.com/advisories/GHSA-xxxx-yyyy-zzzz
+
+Found 1 action(s) with known vulnerabilities
+```
+
+To disable advisory checking:
+
+```bash
+gh-actions-lockfile verify --skip-advisories
+```
+
+### SHA-Only Mode
+
+For maximum security, you can enforce that all action references in your workflows use full 40-character commit SHAs instead of tags or branches:
+
+```bash
+gh-actions-lockfile generate --require-sha
+```
+
+This fails if any workflow uses a tag like `@v4` instead of a full SHA like `@b4ffde65f46336ab88eb53be808477a3936bae11`.
 
 ## Usage
 
@@ -136,13 +197,17 @@ Add this action to your workflow to verify the lockfile:
 
 **Action inputs**:
 
-| Input | Description | Default |
-|-------|-------------|---------|
-| `mode` | Mode to run in: `generate` or `verify` | `verify` |
-| `token` | GitHub token for API access | `${{ github.token }}` |
-| `workflows` | Path to workflows directory | `.github/workflows` |
-| `output` | Path to lockfile | `.github/actions.lock.json` |
-| `comment` | Post a PR comment when verification fails (verify mode only) | `true` |
+| Input       | Description                                                  | Default                     |
+| ----------- | ------------------------------------------------------------ | --------------------------- |
+| `mode`      | Mode to run in: `generate` or `verify`                       | `verify`                    |
+| `token`     | GitHub token for API access                                  | `${{ github.token }}`       |
+| `workflows` | Path to workflows directory                                  | `.github/workflows`         |
+| `output`    | Path to lockfile                                             | `.github/actions.lock.json` |
+| `comment`   | Post a PR comment when verification fails (verify mode only) | `true`                      |
+| `require-sha` | Require all action refs to be full SHAs (generate mode only) | `false`                   |
+| `skip-sha` | Skip SHA resolution verification (verify mode only)           | `false`                     |
+| `skip-integrity` | Skip integrity hash verification (verify mode only)      | `false`                     |
+| `skip-advisories` | Skip security advisory checking (verify mode only)      | `false`                     |
 
 When `comment` is enabled and verification fails in a pull request, the action posts a comment detailing what changed.
 
@@ -216,17 +281,26 @@ actions.lock.json (generated 2025-12-15 21:57:33)
 
 **Global options** (available on all commands):
 
-```
--w, --workflows <path>  Path to workflows directory (default: .github/workflows)
--o, --output <path>     Path to lockfile (default: .github/actions.lock.json)
--t, --token <token>     GitHub token (or use GITHUB_TOKEN env var)
-```
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-w, --workflows <path>` | Path to workflows directory | `.github/workflows` |
+| `-o, --output <path>` | Path to lockfile | `.github/actions.lock.json` |
+| `-t, --token <token>` | GitHub token (or use `GITHUB_TOKEN` env var) | - |
+
+**generate options**:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--require-sha` | Require all action refs to be full SHAs | `false` |
 
 **verify options**:
 
-```
--c, --comment           Post PR comment on verification failure (default: true)
-```
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --comment` | Post PR comment on verification failure | `true` |
+| `--skip-sha` | Skip SHA resolution verification | `false` |
+| `--skip-integrity` | Skip integrity hash verification | `false` |
+| `--skip-advisories` | Skip security advisory checking | `false` |
 
 Use `--no-comment` to disable PR comments when running in CI.
 

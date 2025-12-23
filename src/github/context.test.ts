@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, afterEach } from "vitest";
-import { getPRNumber, getRepository } from "./context.js";
+import { getPRNumber } from "./context.js";
 import { writeFileSync, unlinkSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -81,35 +81,3 @@ describe("getPRNumber", () => {
   });
 });
 
-describe("getRepository", () => {
-  const originalEnv = { ...process.env };
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  test("returns null when GITHUB_REPOSITORY not set", () => {
-    delete process.env.GITHUB_REPOSITORY;
-    expect(getRepository()).toBeNull();
-  });
-
-  test("parses owner and repo correctly", () => {
-    process.env.GITHUB_REPOSITORY = "octocat/hello-world";
-    expect(getRepository()).toEqual({ owner: "octocat", repo: "hello-world" });
-  });
-
-  test("handles org/repo format", () => {
-    process.env.GITHUB_REPOSITORY = "my-org/my-repo";
-    expect(getRepository()).toEqual({ owner: "my-org", repo: "my-repo" });
-  });
-
-  test("returns null for invalid format without slash", () => {
-    process.env.GITHUB_REPOSITORY = "invalid";
-    expect(getRepository()).toBeNull();
-  });
-
-  test("returns null for empty string", () => {
-    process.env.GITHUB_REPOSITORY = "";
-    expect(getRepository()).toBeNull();
-  });
-});

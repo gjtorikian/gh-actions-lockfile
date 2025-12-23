@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Lockfile, VerifyResult, Workflow } from "../types.js";
 import { extractActionRefs, getFullName, parseActionRef } from "../parser/workflow.js";
+import { colors } from "../utils/colors.js";
 
 export const DEFAULT_PATH = ".github/actions.lock.json";
 
@@ -119,16 +120,16 @@ function findTopLevelActions(lockfile: Lockfile): TopLevelAction[] {
 
 export function printVerifyResult(result: VerifyResult): void {
   if (result.match) {
-    console.log("Lockfile is up to date");
+    console.log(colors.success("Lockfile is up to date"));
     return;
   }
 
-  console.log("Lockfile mismatch detected\n");
+  console.log(colors.error(colors.bold("Lockfile mismatch detected\n")));
 
   if (result.newActions.length > 0) {
     console.log("New actions (not in lockfile):");
     for (const c of result.newActions) {
-      console.log(`  + ${c.action}@${c.newVersion}`);
+      console.log(`  ${colors.success("+")} ${colors.bold(c.action)}${colors.dim("@")}${colors.info(c.newVersion ?? "")}`);
     }
     console.log();
   }
@@ -136,7 +137,7 @@ export function printVerifyResult(result: VerifyResult): void {
   if (result.changed.length > 0) {
     console.log("Changed actions:");
     for (const c of result.changed) {
-      console.log(`  ~ ${c.action}: ${c.oldVersion} -> ${c.newVersion}`);
+      console.log(`  ${colors.warning("~")} ${colors.bold(c.action)}: ${colors.dim(c.oldVersion ?? "")} -> ${colors.info(c.newVersion ?? "")}`);
     }
     console.log();
   }
@@ -144,10 +145,10 @@ export function printVerifyResult(result: VerifyResult): void {
   if (result.removed.length > 0) {
     console.log("Removed actions:");
     for (const c of result.removed) {
-      console.log(`  - ${c.action}@${c.oldVersion}`);
+      console.log(`  ${colors.error("-")} ${colors.bold(c.action)}${colors.dim("@")}${c.oldVersion ?? ""}`);
     }
     console.log();
   }
 
-  console.log("Run 'gh-actions-lockfile generate' to update the lockfile");
+  console.log(colors.dim("Run 'gh-actions-lockfile generate' to update the lockfile"));
 }

@@ -27,6 +27,22 @@ inputs:
     description: 'Post a PR comment when verification fails (only in verify mode)'
     required: false
     default: 'true'
+  require-sha:
+    description: 'Require all action refs to be full SHAs (generate mode only)'
+    required: false
+    default: 'false'
+  skip-sha:
+    description: 'Skip SHA resolution verification (verify mode only)'
+    required: false
+    default: 'false'
+  skip-integrity:
+    description: 'Skip integrity hash verification (verify mode only)'
+    required: false
+    default: 'false'
+  skip-advisories:
+    description: 'Skip security advisory checking (verify mode only)'
+    required: false
+    default: 'false'
 
 outputs:
   changed:

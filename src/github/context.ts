@@ -44,19 +44,3 @@ export function getPRNumber(): number | null {
   }
 }
 
-/**
- * Gets the repository owner and name from environment.
- */
-export function getRepository(): { owner: string; repo: string } | null {
-  const repository = process.env.GITHUB_REPOSITORY;
-  if (!repository) {
-    return null;
-  }
-
-  const [owner, repo] = repository.split("/");
-  if (!owner || !repo) {
-    return null;
-  }
-
-  return { owner, repo };
-}

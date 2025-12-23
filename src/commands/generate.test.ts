@@ -59,6 +59,8 @@ function restoreFetch() {
 
 // Suppress console.log during tests
 const originalLog = console.log;
+const originalError = console.error;
+const originalExit = process.exit;
 
 describe("generate command", () => {
   let tempDir: string;
@@ -222,5 +224,76 @@ describe("generate command", () => {
     );
     expect(versions).toContain("v3");
     expect(versions).toContain("v4");
+  });
+});
+
+describe("--require-sha flag", () => {
+  let tempDir: string;
+  let exitCode: number | undefined;
+
+  beforeAll(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "require-sha-test-"));
+  });
+
+  afterAll(async () => {
+    await rm(tempDir, { recursive: true });
+  });
+
+  beforeEach(() => {
+    setupMockFetch();
+    console.log = () => {};
+    console.error = () => {};
+    exitCode = undefined;
+    process.exit = ((code?: number) => {
+      exitCode = code;
+      throw new Error(`process.exit(${code})`);
+    }) as typeof process.exit;
+  });
+
+  afterEach(() => {
+    restoreFetch();
+    console.log = originalLog;
+    console.error = originalError;
+    process.exit = originalExit;
+  });
+
+  test("fails when non-SHA refs are used with --require-sha", async () => {
+    const workflowDir = join(tempDir, "non-sha", ".github", "workflows");
+    await mkdir(workflowDir, { recursive: true });
+
+    // This fixture uses version tags (v4) not SHAs
+    await copyFixture("generate/workflow-single-action.yml", join(workflowDir, "ci.yml"));
+
+    try {
+      await generate({
+        workflows: workflowDir,
+        output: join(workflowDir, "actions.lock.json"),
+        token: "test-token",
+        requireSha: true,
+      });
+    } catch (e) {
+      // Expected due to mocked process.exit
+      expect((e as Error).message).toBe("process.exit(1)");
+    }
+
+    expect(exitCode).toBe(1);
+  });
+
+  test("succeeds when all refs are SHAs with --require-sha", async () => {
+    const workflowDir = join(tempDir, "all-sha", ".github", "workflows");
+    await mkdir(workflowDir, { recursive: true });
+
+    // Use fixture with SHA refs
+    await copyFixture("generate/workflow-sha-ref.yml", join(workflowDir, "ci.yml"));
+
+    await generate({
+      workflows: workflowDir,
+      output: join(workflowDir, "actions.lock.json"),
+      token: "test-token",
+      requireSha: true,
+    });
+
+    // Should not exit with error
+    expect(exitCode).toBeUndefined();
   });
 });

@@ -3,6 +3,7 @@ import { readLockfile } from "../lockfile/lockfile.js";
 import { getFullName, parseActionRef } from "../parser/workflow.js";
 import type { Lockfile, LockedAction } from "../types.js";
 import { findWorkflowDir } from "../utils/directory.js";
+import { colors } from "../utils/colors.js";
 
 interface ListOptions {
   workflows: string;
@@ -36,7 +37,7 @@ export async function list(options: ListOptions): Promise<void> {
 
   // Print header
   const generated = new Date(lockfile.generated);
-  console.log(`actions.lock.json (generated ${generated.toISOString().replace("T", " ").slice(0, 19)})`);
+  console.log(`${colors.bold("actions.lock.json")} ${colors.dim(`(generated ${generated.toISOString().replace("T", " ").slice(0, 19)})`)}`);
   console.log();
 
   // Collect top-level actions (not transitive deps)
@@ -65,11 +66,11 @@ function printAction(
   prefix: string,
   last: boolean
 ): void {
-  const branch = last ? "+-- " : "+-- ";
-  const childPrefix = last ? "    " : "|   ";
+  const branch = last ? "└── " : "├── ";
+  const childPrefix = last ? "    " : "│   ";
 
   const sha = action.sha.slice(0, 12);
-  console.log(`${prefix}${branch}${name}@${action.version} (${sha})`);
+  console.log(`${prefix}${branch}${colors.bold(name)}${colors.dim("@")}${colors.info(action.version)} ${colors.dim(`(${sha})`)}`);
 
   for (let i = 0; i < action.dependencies.length; i++) {
     const dep = action.dependencies[i]!;

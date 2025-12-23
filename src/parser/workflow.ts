@@ -2,6 +2,7 @@ import { glob, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { ActionRef, Workflow } from "../types.js";
+import { colors } from "../utils/colors.js";
 
 // Parses GitHub Action references in the format: owner/repo[/path]@ref
 // Examples:
@@ -10,6 +11,8 @@ import type { ActionRef, Workflow } from "../types.js";
 //   actions/reusable/.github/workflows/test.yml@main -> owner=actions, repo=reusable, path=.github/workflows/test.yml, ref=main
 // Groups: (1) owner, (2) repo, (3) optional path, (4) ref
 const ACTION_REF_REGEX = /^([^/]+)\/([^/@]+)(?:\/([^@]+))?@(.+)$/;
+
+const SHA_REGEX = /^[a-f0-9]{40}$/i;
 
 // Returns true if the action reference should be skipped
 export function shouldSkipActionRef(uses: string): boolean {
@@ -33,7 +36,7 @@ export async function parseWorkflowFile(path: string): Promise<Workflow | null> 
     const workflow = parseYaml(content) as Workflow;
     return workflow;
   } catch (error) {
-    console.error(`Failed to parse ${path}:`, error);
+    console.error(colors.error(`Failed to parse ${colors.dim(path)}:`), error);
     return null;
   }
 }
@@ -82,7 +85,7 @@ export function extractActionRefs(workflows: Workflow[]): ActionRef[] {
 export function parseActionRef(uses: string): ActionRef | null {
   const match = ACTION_REF_REGEX.exec(uses);
   if (!match) {
-    console.warn(`Invalid action reference format: ${uses}`);
+    console.warn(colors.warning(`Invalid action reference format: ${colors.dim(uses)}`));
     return null;
   }
 
@@ -105,4 +108,11 @@ export function getFullName(ref: ActionRef): string {
 
 export function getRepoFullName(ref: ActionRef): string {
   return `${ref.owner}/${ref.repo}`;
+}
+
+/**
+ * Check if a ref string is a full SHA (40-character hex string)
+ */
+export function isSHA(ref: string): boolean {
+  return SHA_REGEX.test(ref);
 }

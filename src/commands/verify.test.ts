@@ -1,9 +1,11 @@
-import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { verifyCommand } from "./verify.js";
+import { verifyCommand, verifyShas, verifyIntegrity } from "./verify.js";
 import { copyFixtures } from "../__fixtures__/helpers.js";
+import { GitHubClient } from "../github/client.js";
+import type { Lockfile } from "../types.js";
 
 // Suppress console.log during tests
 const originalLog = console.log;
@@ -22,7 +24,7 @@ describe("verifyCommand", () => {
   });
 
   beforeEach(() => {
-    console.log = () => {};
+    console.log = () => { };
     exitCode = undefined;
     // Mock process.exit to capture exit code
     process.exit = ((code?: number) => {
@@ -54,6 +56,9 @@ describe("verifyCommand", () => {
     await verifyCommand({
       workflows: workflowDir,
       output: join(workflowDir, "actions.lock.json"),
+      skipSha: true,
+      skipIntegrity: true,
+      skipAdvisories: true,
     });
 
     // No exit code should be set (success)
@@ -80,6 +85,9 @@ describe("verifyCommand", () => {
       await verifyCommand({
         workflows: workflowDir,
         output: join(workflowDir, "actions.lock.json"),
+        skipSha: true,
+        skipIntegrity: true,
+        skipAdvisories: true,
       });
     } catch (e: unknown) {
       // Expected due to mocked process.exit
@@ -104,6 +112,9 @@ describe("verifyCommand", () => {
       verifyCommand({
         workflows: workflowDir,
         output: join(workflowDir, "actions.lock.json"),
+        skipSha: true,
+        skipIntegrity: true,
+        skipAdvisories: true,
       })
     ).rejects.toThrow("Lockfile not found");
   });
@@ -126,6 +137,9 @@ describe("verifyCommand", () => {
       await verifyCommand({
         workflows: workflowDir,
         output: join(workflowDir, "actions.lock.json"),
+        skipSha: true,
+        skipIntegrity: true,
+        skipAdvisories: true,
       });
     } catch {
       // Expected
@@ -152,11 +166,282 @@ describe("verifyCommand", () => {
       await verifyCommand({
         workflows: workflowDir,
         output: join(workflowDir, "actions.lock.json"),
+        skipSha: true,
+        skipIntegrity: true,
+        skipAdvisories: true,
       });
     } catch {
       // Expected
     }
 
     expect(exitCode).toBe(1);
+  });
+});
+
+describe("verifyShas", () => {
+  const originalLog = console.log;
+
+  beforeEach(() => {
+    console.log = () => { };
+  });
+
+  afterEach(() => {
+    console.log = originalLog;
+  });
+
+  test("passes when all SHAs match", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      resolveRef: vi.fn().mockResolvedValue("b4ffde65f46336ab88eb53be808477a3936bae11"),
+    } as unknown as GitHubClient;
+
+    const result = await verifyShas(lockfile, mockClient);
+
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(1);
+    expect(result.failures).toHaveLength(0);
+    expect(mockClient.resolveRef).toHaveBeenCalledWith("actions", "checkout", "v4");
+  });
+
+  test("fails when SHA has changed (tag moved)", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      resolveRef: vi.fn().mockResolvedValue("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+    } as unknown as GitHubClient;
+
+    const result = await verifyShas(lockfile, mockClient);
+
+    expect(result.passed).toBe(false);
+    expect(result.checked).toBe(1);
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]).toEqual({
+      action: "actions/checkout",
+      version: "v4",
+      lockfileSha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+      remoteSha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    });
+  });
+
+  test("checks transitive dependencies", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123",
+            dependencies: [
+              {
+                ref: "actions/toolkit@v1",
+                sha: "cccccccccccccccccccccccccccccccccccccccc",
+                integrity: "sha256-dep123",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      resolveRef: vi.fn()
+        .mockResolvedValueOnce("b4ffde65f46336ab88eb53be808477a3936bae11") // checkout
+        .mockResolvedValueOnce("cccccccccccccccccccccccccccccccccccccccc"), // toolkit
+    } as unknown as GitHubClient;
+
+    const result = await verifyShas(lockfile, mockClient);
+
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(2);
+    expect(mockClient.resolveRef).toHaveBeenCalledTimes(2);
+  });
+
+  test("handles API errors gracefully", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      resolveRef: vi.fn().mockRejectedValue(new Error("API error")),
+    } as unknown as GitHubClient;
+
+    const result = await verifyShas(lockfile, mockClient);
+
+    // Should pass (no failures detected) but with 0 checked
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(0);
+    expect(result.failures).toHaveLength(0);
+  });
+});
+
+describe("verifyIntegrity", () => {
+  const originalLog = console.log;
+
+  beforeEach(() => {
+    console.log = () => { };
+  });
+
+  afterEach(() => {
+    console.log = originalLog;
+  });
+
+  test("passes when all integrity hashes match", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123def456",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      getArchiveSHA256: vi.fn().mockResolvedValue("sha256-abc123def456"),
+    } as unknown as GitHubClient;
+
+    const result = await verifyIntegrity(lockfile, mockClient);
+
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(1);
+    expect(result.failures).toHaveLength(0);
+    expect(mockClient.getArchiveSHA256).toHaveBeenCalledWith(
+      "actions",
+      "checkout",
+      "b4ffde65f46336ab88eb53be808477a3936bae11"
+    );
+  });
+
+  test("fails when integrity hash differs", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123def456",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      getArchiveSHA256: vi.fn().mockResolvedValue("sha256-DIFFERENT"),
+    } as unknown as GitHubClient;
+
+    const result = await verifyIntegrity(lockfile, mockClient);
+
+    expect(result.passed).toBe(false);
+    expect(result.checked).toBe(1);
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]).toEqual({
+      action: "actions/checkout",
+      version: "v4",
+      expected: "sha256-abc123def456",
+      actual: "sha256-DIFFERENT",
+    });
+  });
+
+  test("skips actions without integrity hash", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "", // Empty integrity
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      getArchiveSHA256: vi.fn(),
+    } as unknown as GitHubClient;
+
+    const result = await verifyIntegrity(lockfile, mockClient);
+
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(0);
+    expect(mockClient.getArchiveSHA256).not.toHaveBeenCalled();
+  });
+
+  test("handles API errors gracefully", async () => {
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/checkout": [
+          {
+            version: "v4",
+            sha: "b4ffde65f46336ab88eb53be808477a3936bae11",
+            integrity: "sha256-abc123def456",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const mockClient = {
+      getArchiveSHA256: vi.fn().mockRejectedValue(new Error("Network error")),
+    } as unknown as GitHubClient;
+
+    const result = await verifyIntegrity(lockfile, mockClient);
+
+    // Should pass (no failures detected) but with 0 checked
+    expect(result.passed).toBe(true);
+    expect(result.checked).toBe(0);
+    expect(result.failures).toHaveLength(0);
   });
 });

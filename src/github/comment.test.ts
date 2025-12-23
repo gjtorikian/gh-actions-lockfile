@@ -1,5 +1,6 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { postOrUpdatePRComment } from "./comment.js";
+import { GitHubClient } from "./client.js";
 import type { VerifyResult } from "../types.js";
 
 // Mock fetch globally
@@ -24,11 +25,12 @@ function mockResponse(body: unknown, status = 200) {
 
 describe("postOrUpdatePRComment", () => {
   const originalEnv = { ...process.env };
+  let client: GitHubClient;
 
   beforeEach(() => {
     setupMockFetch();
-    process.env.GITHUB_REPOSITORY = "owner/repo";
     process.env.GITHUB_TOKEN = "test-token";
+    client = new GitHubClient("test-token", 10, "owner", "repo");
   });
 
   afterEach(() => {
@@ -57,7 +59,7 @@ describe("postOrUpdatePRComment", () => {
       removed: [],
     };
 
-    await postOrUpdatePRComment(42, result);
+    await postOrUpdatePRComment(client, 42, result);
 
     expect(createdBody).toContain("<!-- gh-actions-lockfile-comment -->");
     expect(createdBody).toContain("Actions Lockfile Mismatch");
@@ -89,15 +91,16 @@ describe("postOrUpdatePRComment", () => {
       removed: [{ action: "actions/cache", oldVersion: "v3", oldSha: "abc123" }],
     };
 
-    await postOrUpdatePRComment(42, result);
+    await postOrUpdatePRComment(client, 42, result);
 
     expect(updatedBody).toContain("<!-- gh-actions-lockfile-comment -->");
     expect(updatedBody).toContain("`actions/cache@v3`");
     expect(updatedBody).toContain("view commit");
   });
 
-  test("throws when GITHUB_REPOSITORY not set", async () => {
-    delete process.env.GITHUB_REPOSITORY;
+  test("throws when repository context not available", async () => {
+    // Create client without owner/repo
+    const clientNoRepo = new GitHubClient("test-token", 10);
 
     const result: VerifyResult = {
       match: false,
@@ -106,23 +109,8 @@ describe("postOrUpdatePRComment", () => {
       removed: [],
     };
 
-    await expect(postOrUpdatePRComment(42, result)).rejects.toThrow(
-      "GITHUB_REPOSITORY environment variable not set"
-    );
-  });
-
-  test("throws when GITHUB_TOKEN not set", async () => {
-    delete process.env.GITHUB_TOKEN;
-
-    const result: VerifyResult = {
-      match: false,
-      newActions: [],
-      changed: [],
-      removed: [],
-    };
-
-    await expect(postOrUpdatePRComment(42, result)).rejects.toThrow(
-      "GITHUB_TOKEN environment variable not set"
+    await expect(postOrUpdatePRComment(clientNoRepo, 42, result)).rejects.toThrow(
+      "Repository context not available"
     );
   });
 
@@ -155,7 +143,7 @@ describe("postOrUpdatePRComment", () => {
       removed: [{ action: "actions/cache", oldVersion: "v3", oldSha: "ccc" }],
     };
 
-    await postOrUpdatePRComment(42, result);
+    await postOrUpdatePRComment(client, 42, result);
 
     expect(createdBody).toContain("### New Actions");
     expect(createdBody).toContain("`actions/setup-node@v4`");
@@ -191,7 +179,7 @@ describe("postOrUpdatePRComment", () => {
       removed: [],
     };
 
-    await postOrUpdatePRComment(42, result);
+    await postOrUpdatePRComment(client, 42, result);
 
     expect(createdBody).toContain("3 actions affected");
   });
@@ -217,7 +205,7 @@ describe("postOrUpdatePRComment", () => {
       removed: [],
     };
 
-    await postOrUpdatePRComment(42, result);
+    await postOrUpdatePRComment(client, 42, result);
 
     expect(createdBody).toContain("1 action affected");
   });
@@ -242,7 +230,7 @@ describe("postOrUpdatePRComment", () => {
       removed: [],
     };
 
-    await expect(postOrUpdatePRComment(42, result)).rejects.toThrow(
+    await expect(postOrUpdatePRComment(client, 42, result)).rejects.toThrow(
       "Failed to create comment: 403"
     );
   });
