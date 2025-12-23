@@ -1,3 +1,12 @@
+## v1.1.2 - 2025-12-23
+
+## What's Changed
+* chore(main): release 1.1.1 by @github-actions[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/22
+* release with updated build process by @gjtorikian in https://github.com/gjtorikian/gh-actions-lockfile/pull/23
+
+
+**Full Changelog**: https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.1.0...v1.1.2
+
 # Changelog
 
 ## 1.1.1 (2025-12-22)
