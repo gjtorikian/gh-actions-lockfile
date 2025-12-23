@@ -1,3 +1,11 @@
+## v1.2.0 - 2025-12-23
+
+## What's Changed
+* Perform runtime integrity validation by @gjtorikian in https://github.com/gjtorikian/gh-actions-lockfile/pull/33
+
+
+**Full Changelog**: https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.1.4...v1.2.0
+
 ## v1.1.4 - 2025-12-23
 
 ## What's Changed

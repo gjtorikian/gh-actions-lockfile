@@ -6,3 +6,7 @@ export declare function extractActionRefs(workflows: Workflow[]): ActionRef[];
 export declare function parseActionRef(uses: string): ActionRef | null;
 export declare function getFullName(ref: ActionRef): string;
 export declare function getRepoFullName(ref: ActionRef): string;
+/**
+ * Check if a ref string is a full SHA (40-character hex string)
+ */
+export declare function isSHA(ref: string): boolean;
