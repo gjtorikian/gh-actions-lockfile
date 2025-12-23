@@ -75,10 +75,10 @@ const verifyCommandDef = command(
         description: "Skip integrity hash verification",
         default: false,
       },
-      checkAdvisories: {
+      skipAdvisories: {
         type: Boolean,
-        description: "Check for security advisories (default: true)",
-        default: true,
+        description: "Skip security advisory checking",
+        default: false,
       },
       token: {
         type: String,

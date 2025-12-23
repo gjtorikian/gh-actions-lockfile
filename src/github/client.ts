@@ -14,6 +14,10 @@ export class GitHubClient {
     this.limiter = pLimit(maxConcurrent);
   }
 
+  getToken(): string {
+    return this.token;
+  }
+
   async resolveRef(owner: string, repo: string, ref: string): Promise<string> {
     // Check if it's already a SHA (40 hex chars)
     if (/^[a-f0-9]{40}$/i.test(ref)) {
