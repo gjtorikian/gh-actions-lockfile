@@ -11696,7 +11696,7 @@ function printAction(name, action, lockfile, prefix, last) {
 // package.json
 var package_default = {
   name: "gh-actions-lockfile",
-  version: "1.1.2",
+  version: "1.1.3",
   license: "AGPL-3.0-or-later",
   description: "Generate and verify lockfiles for GitHub Actions dependencies",
   author: "Garen Torikian",
@@ -11736,7 +11736,7 @@ var package_default = {
   },
   scripts: {
     start: "tsx src/index.ts",
-    build: "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/cli.js --format=esm --banner:js='#!/usr/bin/env node' && esbuild src/action.ts --bundle --platform=node --target=node24 --outfile=dist/index.js --format=esm && tsc --emitDeclarationOnly",
+    build: "ncc build src/action.ts -o dist -t && esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/cli.js --format=esm --banner:js='#!/usr/bin/env node' && tsc --emitDeclarationOnly",
     typecheck: "tsc --noEmit",
     test: "vitest run",
     lint: "oxlint",
@@ -11754,6 +11754,7 @@ var package_default = {
   },
   devDependencies: {
     "@types/node": "^22.0.0",
+    "@vercel/ncc": "^0.38.4",
     esbuild: "^0.24.0",
     oxlint: "^1.33.0",
     tsx: "^4.19.0",
