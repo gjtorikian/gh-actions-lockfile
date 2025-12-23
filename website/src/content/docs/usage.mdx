@@ -120,9 +120,43 @@ If `verify` fails, but you didn't change any actions, investigate:
 
 - **New dependency detected**: A composite action you use added a new transitive dependency
 - **SHA mismatch**: An upstream maintainer force-pushed or retagged a version (this is a potential supply chain concern)
+- **Integrity mismatch**: The tarball content has changed for the same SHA (rare, but a serious supply chain concern)
 - **Missing action**: An action was removed from your workflow but is still in the lockfile
 
 For unexpected changes, review the upstream action's commit history before regenerating the lockfile.
+
+## Security Features
+
+### SHA Verification
+
+When you run `verify`, the tool checks that all locked action refs still resolve to the same commit SHAs. This detects if an upstream maintainer has re-pointed a tag to a different commit.
+
+To skip SHA verification, use `--skip-sha`.
+
+### Integrity Verification
+
+The `verify` command also:
+1. Re-downloads each action's tarball from GitHub
+2. Computes the SHA256 hash of the tarball
+3. Compares it against the stored `integrity` hash in your lockfile
+
+If any hash mismatches, verification fails. To skip integrity checking (e.g., for faster CI runs), use `--skip-integrity`.
+
+### Security Advisory Checking
+
+By default, the `verify` command checks your locked actions against the GitHub Advisory Database for known vulnerabilities. When vulnerabilities are found, they are reported as warnings (not failures).
+
+To disable advisory checking, use `--skip-advisories`.
+
+### SHA-Only Mode
+
+For maximum security, you can enforce that all action references use full 40-character commit SHAs instead of tags:
+
+```bash
+npx gh-actions-lockfile generate --require-sha
+```
+
+This fails if any workflow uses a tag like `@v4` instead of a full SHA.
 
 ## Action Inputs
 
@@ -135,6 +169,10 @@ When using the GitHub Action, you can configure:
 | `workflows` | Path to workflows directory | `.github/workflows` |
 | `output` | Path to lockfile | `.github/actions.lock.json` |
 | `comment` | Post a PR comment when verification fails (only in verify mode) | `true` |
+| `require-sha` | Require all action refs to be full SHAs (generate mode only) | `false` |
+| `skip-sha` | Skip SHA resolution verification (verify mode only) | `false` |
+| `skip-integrity` | Skip integrity hash verification (verify mode only) | `false` |
+| `skip-advisories` | Skip security advisory checking (verify mode only) | `false` |
 
 ### PR Comments
 

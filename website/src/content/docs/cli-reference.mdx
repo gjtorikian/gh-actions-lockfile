@@ -44,6 +44,52 @@ GitHub token for API authentication. Required for private repositories or to avo
 node dist/cli.js generate --token ghp_xxxxxxxxxxxx
 ```
 
+## Generate Options
+
+### `--require-sha`
+
+Require all action references to be full 40-character commit SHAs. Fails if any workflow uses tags like `@v4` instead of full SHAs.
+
+```bash
+node dist/cli.js generate --require-sha
+```
+
+## Verify Options
+
+### `--skip-sha`
+
+Skip SHA resolution verification. This makes verification faster but less secure.
+
+```bash
+node dist/cli.js verify --skip-sha
+```
+
+### `--skip-integrity`
+
+Skip integrity hash verification. This makes verification faster but less secure.
+
+```bash
+node dist/cli.js verify --skip-integrity
+```
+
+### `--skip-advisories`
+
+Skip checking locked actions against the GitHub Advisory Database for known vulnerabilities. Advisory checking is enabled by default.
+
+```bash
+# Disable advisory checking
+node dist/cli.js verify --skip-advisories
+```
+
+### `-c, --comment` / `--no-comment`
+
+Post a PR comment when verification fails. Enabled by default.
+
+```bash
+# Disable PR comments
+node dist/cli.js verify --no-comment
+```
+
 ## Environment Variables
 
 ### `GITHUB_TOKEN`

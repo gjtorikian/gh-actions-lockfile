@@ -18,6 +18,14 @@ gh-actions-lockfile generate
 
 This scans all workflow files in `.github/workflows/` and creates `actions.lock.json` with pinned versions for every action, including transitive dependencies from composite actions.
 
+**Options**:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--require-sha` | Require all action refs to be full SHAs | `false` |
+
+Use `--require-sha` to enforce that all action references use full 40-character commit SHAs instead of tags or branches.
+
 ## verify
 
 Verifies that your workflow files match the lockfile. Use this in CI to catch any unexpected changes to your actions.
@@ -26,18 +34,28 @@ Verifies that your workflow files match the lockfile. Use this in CI to catch an
 gh-actions-lockfile verify
 ```
 
+The verify command performs four checks:
+1. **Lockfile match**: Ensures workflow actions match lockfile entries
+2. **SHA verification**: Confirms tags still resolve to the locked commit SHAs
+3. **Integrity verification**: Re-downloads tarballs and verifies SHA256 hashes
+4. **Advisory check**: Queries GitHub Advisory Database for known vulnerabilities
+
 **Options**:
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-c, --comment` | Post PR comment on verification failure | `true` |
+| `--skip-sha` | Skip SHA resolution verification | `false` |
+| `--skip-integrity` | Skip integrity hash verification | `false` |
+| `--skip-advisories` | Skip security advisory checking | `false` |
 
 Use `--no-comment` to disable PR comments.
+Use `--skip-sha`, `--skip-integrity`, or `--skip-advisories` for faster verification (less secure).
 
 **Exit codes**:
 
-- `0` - All actions match the lockfile
-- `1` - Mismatch detected (action added, removed, or changed)
+- `0` - All actions match the lockfile and integrity checks pass
+- `1` - Mismatch detected (action added, removed, or changed) or integrity check failed
 
 When verification fails, the output shows exactly what changed. If running in a PR context with comments enabled, a comment is automatically posted to the PR detailing the mismatches.
 
