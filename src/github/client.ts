@@ -212,7 +212,13 @@ export class GitHubClient {
       headers.Authorization = `Bearer ${this.token}`;
     }
 
-    return this.limiter(() => fetch(url, { method, headers, body: JSON.stringify(body) }));
+    // Build options separately to satisfy eslint-plugin-unicorn/no-invalid-fetch-options
+    // which doesn't understand that `method` is typed to only allow POST/PATCH
+    const options: RequestInit = { method, headers };
+    if (body !== undefined) {
+      options.body = JSON.stringify(body);
+    }
+    return this.limiter(() => fetch(url, options));
   }
 
   private async graphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {

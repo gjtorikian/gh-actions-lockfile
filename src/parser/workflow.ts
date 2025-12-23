@@ -2,6 +2,7 @@ import { glob, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { ActionRef, Workflow } from "../types.js";
+import { colors } from "../utils/colors.js";
 
 // Parses GitHub Action references in the format: owner/repo[/path]@ref
 // Examples:
@@ -35,7 +36,7 @@ export async function parseWorkflowFile(path: string): Promise<Workflow | null> 
     const workflow = parseYaml(content) as Workflow;
     return workflow;
   } catch (error) {
-    console.error(`Failed to parse ${path}:`, error);
+    console.error(colors.error(`Failed to parse ${colors.dim(path)}:`), error);
     return null;
   }
 }
@@ -84,7 +85,7 @@ export function extractActionRefs(workflows: Workflow[]): ActionRef[] {
 export function parseActionRef(uses: string): ActionRef | null {
   const match = ACTION_REF_REGEX.exec(uses);
   if (!match) {
-    console.warn(`Invalid action reference format: ${uses}`);
+    console.warn(colors.warning(`Invalid action reference format: ${colors.dim(uses)}`));
     return null;
   }
 

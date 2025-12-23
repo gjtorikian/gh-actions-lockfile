@@ -1,5 +1,7 @@
 import { GitHubClient, type Advisory } from "../github/client.js";
 import type { Lockfile } from "../types.js";
+import { colors } from "../utils/colors.js";
+import { pluralize } from "../utils/pluralize.js";
 
 export type { Advisory };
 
@@ -26,12 +28,12 @@ export async function checkAdvisories(
 
   if (!token) {
     console.log(
-      "Skipping advisory check (no token available for GraphQL API)\n"
+      colors.warning("Skipping advisory check (no token available for GraphQL API)\n")
     );
     return { checked: 0, actionsWithAdvisories: [], hasVulnerabilities: false };
   }
 
-  console.log("Checking security advisories...");
+  console.log(colors.info("Checking security advisories..."));
 
   for (const [actionName, versions] of Object.entries(lockfile.actions)) {
     for (const action of versions) {
@@ -53,7 +55,7 @@ export async function checkAdvisories(
           error.message.includes("INSUFFICIENT_SCOPES")
         ) {
           console.log(
-            "Skipping advisory check (token lacks required scopes)\n"
+            colors.warning("Skipping advisory check (token lacks required scopes)\n")
           );
           return {
             checked: 0,
@@ -72,6 +74,21 @@ export async function checkAdvisories(
   };
 }
 
+function getSeverityLabel(severity: Advisory["severity"]): string {
+  switch (severity) {
+    case "CRITICAL":
+      return colors.critical("CRIT");
+    case "HIGH":
+      return colors.high("HIGH");
+    case "MODERATE":
+      return colors.moderate("MOD ");
+    case "LOW":
+      return colors.low("LOW ");
+    default:
+      return colors.dim(severity);
+  }
+}
+
 export function printAdvisoryResults(result: AdvisoryResult): void {
   if (result.checked === 0) {
     return;
@@ -80,26 +97,26 @@ export function printAdvisoryResults(result: AdvisoryResult): void {
   console.log();
 
   if (!result.hasVulnerabilities) {
-    console.log(`✓ No known vulnerabilities found (${result.checked} checked)`);
+    console.log(`${colors.success("✓")} No known vulnerabilities found (${result.checked} checked)`);
     console.log();
     return;
   }
 
-  console.log("Security advisories found:\n");
+  console.log(colors.error(colors.bold("Security advisories found:\n")));
 
   for (const actionAdvisory of result.actionsWithAdvisories) {
     for (const advisory of actionAdvisory.advisories) {
       console.log(
-        `${actionAdvisory.action}@${actionAdvisory.version}`
+        `${getSeverityLabel(advisory.severity)} ${colors.bold(actionAdvisory.action)}${colors.dim("@")}${actionAdvisory.version}`
       );
-      console.log(`    ${advisory.ghsaId} (${advisory.severity})`);
-      console.log(`    ${advisory.summary}`);
-      console.log(`    ${advisory.permalink}`);
+      console.log(`     ${colors.dim(advisory.ghsaId)}`);
+      console.log(`     ${advisory.summary}`);
+      console.log(`     ${colors.dim(advisory.permalink)}`);
       console.log();
     }
   }
 
   console.log(
-    `Found ${result.actionsWithAdvisories.length} action(s) with known vulnerabilities\n`
+    colors.error(`Found ${pluralize('action', 'actions', result.actionsWithAdvisories.length)} with known vulnerabilities\n`)
   );
 }

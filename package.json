@@ -57,6 +57,7 @@
     "@actions/core": "^2.0.1",
     "cleye": "^2.1.1",
     "p-limit": "^7.2.0",
+    "picocolors": "^1.1.1",
     "yaml": "^2.6.1"
   },
   "devDependencies": {

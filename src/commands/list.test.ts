@@ -92,7 +92,7 @@ describe("list command", () => {
 
     // Should use tree characters
     const hasTreeChars = consoleLogs.some(
-      (log) => log.includes("+--")
+      (log) => log.includes("├──") || log.includes("└──")
     );
     expect(hasTreeChars).toBe(true);
   });

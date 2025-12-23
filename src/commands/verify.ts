@@ -2,6 +2,8 @@ import { join, dirname, isAbsolute } from "node:path";
 import { readLockfile, verify, printVerifyResult } from "../lockfile/lockfile.js";
 import { parseWorkflowDir } from "../parser/workflow.js";
 import { findWorkflowDir } from "../utils/directory.js";
+import { colors } from "../utils/colors.js";
+import { pluralize } from "../utils/pluralize.js";
 import { postOrUpdatePRComment } from "../github/comment.js";
 import { getPRNumber } from "../github/context.js";
 import { GitHubClient } from "../github/client.js";
@@ -57,7 +59,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
   const lockfile = await readLockfile(lockfilePath);
   const workflows = await parseWorkflowDir(workflowDir);
 
-  console.log("Verifying lockfile...\n");
+  console.log(colors.bold("Verifying lockfile...\n"));
 
   // Step 1: Check if workflows match lockfile
   const result = verify(workflows, lockfile);
@@ -77,7 +79,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
       hasFailures = true;
     }
   } else {
-    console.log("Skipping SHA verification (--skip-sha)\n");
+    console.log(colors.warning("Skipping SHA verification (--skip-sha)\n"));
   }
 
   // Verify integrity: check that the tarball hashes match
@@ -89,7 +91,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
       hasFailures = true;
     }
   } else {
-    console.log("Skipping integrity verification (--skip-integrity)\n");
+    console.log(colors.warning("Skipping integrity verification (--skip-integrity)\n"));
   }
 
   // Check for any security advisories
@@ -101,7 +103,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
       hasFailures = true;
     }
   } else {
-    console.log("Skipping security advisory check (--skip-advisories)\n");
+    console.log(colors.warning("Skipping security advisory check (--skip-advisories)\n"));
   }
 
   if (hasFailures) {
@@ -112,7 +114,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
     process.exit(1);
   }
 
-  console.log("Lockfile verification passed");
+  console.log(colors.success(colors.bold("Lockfile verification passed")));
 }
 
 export async function verifyIntegrity(
@@ -149,7 +151,7 @@ export async function verifyIntegrity(
     return { passed: true, checked: 0, failures: [] };
   }
 
-  console.log(`Checking integrity of ${actionsToCheck.length} action(s)...`);
+  console.log(colors.info(`Checking integrity of ${pluralize('action', 'actions', actionsToCheck.length)}...`));
 
   const results = await Promise.all(
     actionsToCheck.map(async (action) => {
@@ -165,7 +167,7 @@ export async function verifyIntegrity(
         );
 
         if (currentIntegrity !== action.integrity) {
-          console.log(`✗ ${action.name}@${action.version}`);
+          console.log(`${colors.error("✗")} ${colors.bold(action.name)}${colors.dim("@")}${action.version}`);
           return {
             checked: true,
             failure: {
@@ -176,12 +178,12 @@ export async function verifyIntegrity(
             },
           };
         } else {
-          console.log(`✓ ${action.name}@${action.version}`);
+          console.log(`${colors.success("✓")} ${colors.bold(action.name)}${colors.dim("@")}${action.version}`);
           return { checked: true, failure: null };
         }
       } catch (error) {
         console.log(
-          `⚠ ${action.name}@${action.version} - could not verify: ${error instanceof Error ? error.message : error}`
+          `${colors.warning("⚠")} ${colors.bold(action.name)}${colors.dim("@")}${action.version} - ${colors.dim(`could not verify: ${error instanceof Error ? error.message : error}`)}`
         );
         return { checked: false, failure: null };
       }
@@ -202,18 +204,18 @@ export async function verifyIntegrity(
 
 function printIntegrityResult(result: IntegrityResult): void {
   if (result.checked === 0) {
-    console.log("No integrity hashes to verify\n");
+    console.log(colors.dim("No integrity hashes to verify\n"));
     return;
   }
 
   if (result.passed) {
-    console.log(`All integrity checks passed (${result.checked} verified)\n`);
+    console.log(colors.success(`All integrity checks passed (${result.checked} verified)\n`));
   } else {
-    console.log("INTEGRITY VERIFICATION FAILED\n");
+    console.log(colors.error(colors.bold("INTEGRITY VERIFICATION FAILED\n")));
     for (const failure of result.failures) {
-      console.log(`  ${failure.action}@${failure.version}`);
-      console.log(`    Expected: ${failure.expected}`);
-      console.log(`    Got:      ${failure.actual}`);
+      console.log(`  ${colors.bold(failure.action)}${colors.dim("@")}${failure.version}`);
+      console.log(`    ${colors.dim("Expected:")} ${failure.expected}`);
+      console.log(`    ${colors.dim("Got:")}      ${colors.error(failure.actual)}`);
     }
     console.log();
   }
@@ -266,7 +268,7 @@ export async function verifyShas(
     return { passed: true, checked: 0, failures: [] };
   }
 
-  console.log(`Checking SHA resolution for ${actionsToCheck.length} action(s)...`);
+  console.log(colors.info(`Checking SHA resolution for ${pluralize('action', 'actions', actionsToCheck.length)}...`));
 
   const results = await Promise.all(
     actionsToCheck.map(async (action) => {
@@ -278,7 +280,7 @@ export async function verifyShas(
         const remoteSha = await client.resolveRef(owner, repo, action.version);
 
         if (remoteSha !== action.sha) {
-          console.log(`✗ ${action.name}@${action.version}`);
+          console.log(`${colors.error("✗")} ${colors.bold(action.name)}${colors.dim("@")}${action.version}`);
           return {
             checked: true,
             failure: {
@@ -289,12 +291,12 @@ export async function verifyShas(
             },
           };
         } else {
-          console.log(`✓ ${action.name}@${action.version}`);
+          console.log(`${colors.success("✓")} ${colors.bold(action.name)}${colors.dim("@")}${action.version}`);
           return { checked: true, failure: null };
         }
       } catch (error) {
         console.log(
-          `⚠ ${action.name}@${action.version} - could not verify: ${error instanceof Error ? error.message : error}`
+          `${colors.warning("⚠")} ${colors.bold(action.name)}${colors.dim("@")}${action.version} - ${colors.dim(`could not verify: ${error instanceof Error ? error.message : error}`)}`
         );
         return { checked: false, failure: null };
       }
@@ -317,19 +319,19 @@ export async function verifyShas(
 
 function printShaResult(result: ShaValidationResult): void {
   if (result.checked === 0) {
-    console.log("No SHA references to verify\n");
+    console.log(colors.dim("No SHA references to verify\n"));
     return;
   }
 
   if (result.passed) {
-    console.log(`All SHA checks passed (${result.checked} verified)\n`);
+    console.log(colors.success(`All SHA checks passed (${result.checked} verified)\n`));
   } else {
-    console.log("SHA VALIDATION FAILED\n");
+    console.log(colors.error(colors.bold("SHA VALIDATION FAILED\n")));
     for (const failure of result.failures) {
-      console.log(`  ${failure.action}@${failure.version}`);
-      console.log(`    Lockfile: ${failure.lockfileSha}`);
-      console.log(`    Current:  ${failure.remoteSha}`);
-      console.log(`    WARNING: Tag ${failure.version} has been moved!`);
+      console.log(`  ${colors.bold(failure.action)}${colors.dim("@")}${failure.version}`);
+      console.log(`    ${colors.dim("Lockfile:")} ${failure.lockfileSha}`);
+      console.log(`    ${colors.dim("Current:")}  ${colors.error(failure.remoteSha)}`);
+      console.log(`    ${colors.warning(`WARNING: Tag ${failure.version} has been moved!`)}`);
     }
     console.log();
   }
@@ -338,16 +340,16 @@ function printShaResult(result: ShaValidationResult): void {
 async function postPRComment(client: GitHubClient, result: VerifyResult): Promise<void> {
   const prNumber = getPRNumber();
   if (!prNumber) {
-    console.log("Not running in PR context, skipping comment");
+    console.log(colors.dim("Not running in PR context, skipping comment"));
     return;
   }
 
   try {
     await postOrUpdatePRComment(client, prNumber, result);
-    console.log(`Posted lockfile mismatch comment on PR #${prNumber}`);
+    console.log(colors.success(`Posted lockfile mismatch comment on PR #${prNumber}`));
   } catch (error) {
     console.error(
-      "Failed to post PR comment:",
+      colors.error("Failed to post PR comment:"),
       error instanceof Error ? error.message : error
     );
     // Don't fail the action if commenting fails

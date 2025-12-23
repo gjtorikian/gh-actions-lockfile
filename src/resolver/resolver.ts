@@ -1,6 +1,7 @@
 import { GitHubClient } from "../github/client.js";
 import { getFullName, parseActionRef, shouldSkipActionRef } from "../parser/workflow.js";
 import type { ActionRef, Lockfile, LockedAction, LockedDependency } from "../types.js";
+import { colors } from "../utils/colors.js";
 
 const MAX_DEPTH = 10;
 
@@ -43,7 +44,7 @@ export class Resolver {
     }
     this.visited.add(ref.rawUses);
 
-    console.log(`Resolving ${actionKey}@${ref.ref}...`);
+    console.log(colors.info(`Resolving ${colors.bold(actionKey)}${colors.dim("@")}${ref.ref}...`));
 
     // Resolve the ref to a SHA
     const sha = await this.client.resolveRef(ref.owner, ref.repo, ref.ref);
@@ -51,7 +52,7 @@ export class Resolver {
     // Get integrity hash and transitive deps in parallel (they're independent)
     const [integrity, deps] = await Promise.all([
       this.client.getArchiveSHA256(ref.owner, ref.repo, sha).catch((error) => {
-        console.log(`  Warning: could not compute integrity hash: ${error}`);
+        console.log(colors.warning(`  Warning: could not compute integrity hash: ${error}`));
         return "";
       }),
       this.findTransitiveDeps(ref, sha),
@@ -87,7 +88,7 @@ export class Resolver {
       lockfile.actions[actionKey] = [];
     }
     lockfile.actions[actionKey].push(action);
-    console.log(`  Resolved to ${sha.slice(0, 12)}`);
+    console.log(colors.success(`  Resolved to ${colors.dim(sha.slice(0, 12))}`));
   }
 
   private async findTransitiveDeps(ref: ActionRef, sha: string): Promise<ActionRef[]> {
