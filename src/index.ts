@@ -1,75 +1,107 @@
-import { Command } from "commander";
+import { cli, command } from "cleye";
 import { generate } from "./commands/generate.js";
 import { verifyCommand } from "./commands/verify.js";
 import { list } from "./commands/list.js";
 import { DEFAULT_PATH } from "./lockfile/lockfile.js";
 import pkg from "../package.json";
 
-const program = new Command();
+// Common flags shared across commands
+const commonFlags = {
+  workflows: {
+    type: String,
+    alias: "w",
+    description: "Path to workflows directory",
+    default: ".github/workflows",
+  },
+  output: {
+    type: String,
+    alias: "o",
+    description: "Path to lockfile",
+    default: DEFAULT_PATH,
+  },
+} as const;
 
-program
-  .name("gh-actions-lockfile")
-  .description(
-    "Generate and verify lockfiles for GitHub Actions dependencies."
-  )
-  .version(pkg.version);
-
-// Global options
-const workflowsOption = [
-  "-w, --workflows <path>",
-  "Path to workflows directory",
-  ".github/workflows",
-] as const;
-
-const outputOption = ["-o, --output <path>", "Path to lockfile", DEFAULT_PATH] as const;
-
-const tokenOption = [
-  "-t, --token <token>",
-  "GitHub token (or use GITHUB_TOKEN env var)",
-] as const;
-
-program
-  .command("generate")
-  .description("Generate or update the lockfile")
-  .option(...workflowsOption)
-  .option(...outputOption)
-  .option(...tokenOption)
-  .action(async (options) => {
+const generateCommand = command(
+  {
+    name: "generate",
+    help: {
+      description: "Generate or update the lockfile",
+    },
+    flags: {
+      ...commonFlags,
+      token: {
+        type: String,
+        alias: "t",
+        description: "GitHub token (or use GITHUB_TOKEN env var)",
+      },
+    },
+  },
+  async (argv) => {
     try {
-      await generate(options);
+      await generate(argv.flags);
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
       process.exit(2);
     }
-  });
+  }
+);
 
-program
-  .command("verify")
-  .description("Verify workflows match the lockfile")
-  .option(...workflowsOption)
-  .option(...outputOption)
-  .option("-c, --comment", "Post PR comment on verification failure", true)
-  .action(async (options) => {
+const verifyCommandDef = command(
+  {
+    name: "verify",
+    help: {
+      description: "Verify workflows match the lockfile",
+    },
+    flags: {
+      ...commonFlags,
+      comment: {
+        type: Boolean,
+        alias: "c",
+        description: "Post PR comment on verification failure",
+        default: true,
+      },
+    },
+  },
+  async (argv) => {
     try {
-      await verifyCommand(options);
+      await verifyCommand(argv.flags);
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
       process.exit(2);
     }
-  });
+  }
+);
 
-program
-  .command("list")
-  .description("Display the dependency tree of all locked actions")
-  .option(...workflowsOption)
-  .option(...outputOption)
-  .action(async (options) => {
+const listCommand = command(
+  {
+    name: "list",
+    help: {
+      description: "Display the dependency tree of all locked actions",
+    },
+    flags: {
+      ...commonFlags,
+    },
+  },
+  async (argv) => {
     try {
-      await list(options);
+      await list(argv.flags);
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
       process.exit(2);
     }
-  });
+  }
+);
 
-program.parse();
+const argv = cli({
+  name: "gh-actions-lockfile",
+  version: pkg.version,
+  commands: [generateCommand, verifyCommandDef, listCommand],
+});
+
+// Handle unknown commands
+if (!argv.command && argv._.length > 0) {
+  const unknownCommand = argv._[0];
+  console.error(`Error: Unknown command '${unknownCommand}'`);
+  console.error("Run 'gh-actions-lockfile --help' for available commands.");
+  process.exit(1);
+}

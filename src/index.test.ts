@@ -49,7 +49,8 @@ describe("CLI", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("gh-actions-lockfile");
-      expect(stdout).toContain("Generate and verify lockfiles");
+      expect(stdout).toContain("Commands:");
+      expect(stdout).toContain("Generate or update the lockfile");
     });
 
     test("shows help with -h flag", async () => {
@@ -69,7 +70,8 @@ describe("CLI", () => {
     });
 
     test("shows version with -V flag", async () => {
-      const { stdout, exitCode } = await runCli(["-V"]);
+      // cleye doesn't support -V shorthand, only --version
+      const { stdout, exitCode } = await runCli(["--version"]);
 
       expect(exitCode).toBe(0);
       expect(stdout).toMatch(/\d+\.\d+\.\d+/);
@@ -169,9 +171,8 @@ describe("CLI", () => {
     test("shows error for unknown command", async () => {
       const { stderr, exitCode } = await runCli(["unknown"]);
 
-      // Commander exits with 1 for unknown commands
       expect(exitCode).toBe(1);
-      expect(stderr).toContain("unknown");
+      expect(stderr).toContain("Unknown command");
     });
   });
 
