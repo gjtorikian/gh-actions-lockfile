@@ -1,3 +1,11 @@
+## v1.1.4 - 2025-12-23
+
+## What's Changed
+* switch to a CLI parsing tool that supports ESM by @gjtorikian in https://github.com/gjtorikian/gh-actions-lockfile/pull/31
+
+
+**Full Changelog**: https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.1.3...v1.1.4
+
 ## v1.1.3 - 2025-12-23
 
 - switch build to use `ncc`
