@@ -107,7 +107,7 @@ export async function verifyCommand(options: VerifyOptions): Promise<void> {
   if (hasFailures) {
     // Post PR comment if enabled
     if (options.comment) {
-      await postPRComment(result);
+      await postPRComment(client, result);
     }
     process.exit(1);
   }
@@ -335,7 +335,7 @@ function printShaResult(result: ShaValidationResult): void {
   }
 }
 
-async function postPRComment(result: VerifyResult): Promise<void> {
+async function postPRComment(client: GitHubClient, result: VerifyResult): Promise<void> {
   const prNumber = getPRNumber();
   if (!prNumber) {
     console.log("Not running in PR context, skipping comment");
@@ -343,7 +343,7 @@ async function postPRComment(result: VerifyResult): Promise<void> {
   }
 
   try {
-    await postOrUpdatePRComment(prNumber, result);
+    await postOrUpdatePRComment(client, prNumber, result);
     console.log(`Posted lockfile mismatch comment on PR #${prNumber}`);
   } catch (error) {
     console.error(
