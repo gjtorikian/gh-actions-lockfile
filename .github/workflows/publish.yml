@@ -27,12 +27,26 @@ jobs:
       release: ${{ github.event_name == 'workflow_dispatch' || ((github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release'))) }}
       build_dist: true
 
+  release:
+    needs: node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: gjtorikian/actions/setup-languages/node@main
+
+      - name: Build and publish to npm
+        run: |
+          npm run package
+          npm publish --provenance --access public
+
   point_to_latest:
     needs: node
     if: ${{ needs.node.outputs.major != '' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure Git
         run: |
