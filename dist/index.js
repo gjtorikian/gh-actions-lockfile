@@ -28157,7 +28157,7 @@ async function run() {
     const mode = core.getInput("mode", { required: true });
     const token = core.getInput("token") || void 0;
     const workflows = core.getInput("workflows") || ".github/workflows";
-    const output = core.getInput("output") || ".github/workflows/actions.lock.json";
+    const output = core.getInput("output") || ".github/actions.lock.json";
     const comment = core.getInput("comment") === "true";
     if (token) {
       process.env.GITHUB_TOKEN = token;

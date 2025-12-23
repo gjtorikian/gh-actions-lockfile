@@ -11105,7 +11105,7 @@ function getFullName(ref) {
 }
 
 // src/lockfile/lockfile.ts
-var DEFAULT_PATH = ".github/workflows/actions.lock.json";
+var DEFAULT_PATH = ".github/actions.lock.json";
 async function readLockfile(path) {
   try {
     await access(path);
@@ -11696,7 +11696,7 @@ function printAction(name, action, lockfile, prefix, last) {
 // package.json
 var package_default = {
   name: "gh-actions-lockfile",
-  version: "1.0.0",
+  version: "1.1.2",
   license: "AGPL-3.0-or-later",
   description: "Generate and verify lockfiles for GitHub Actions dependencies",
   author: "Garen Torikian",
@@ -11716,7 +11716,9 @@ var package_default = {
     "lockfile",
     "security",
     "dependency-management",
-    "ci-cd"
+    "ci-cd",
+    "supply-chain-security",
+    "pinning"
   ],
   files: [
     "dist"
