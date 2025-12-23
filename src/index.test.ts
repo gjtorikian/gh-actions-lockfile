@@ -42,7 +42,7 @@ describe("CLI", () => {
     // --help
     expect(help.exitCode).toBe(0);
     expect(help.stdout).toContain("gh-actions-lockfile");
-    expect(help.stdout).toContain("Commands:");
+    expect(help.stdout).toContain("COMMANDS:");
     expect(help.stdout).toContain("Generate or update the lockfile");
 
     // -h (short form)
