@@ -24,11 +24,11 @@ jobs:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
     with:
       prepare: ${{ github.event_name == 'push' }}
-      release: ${{ github.event_name == 'workflow_dispatch' || ((github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release'))) }}
+      release: ${{ ((github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release'))) }}
       build_dist: true
 
   publish:
-    if: ${{ (github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || ((github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release'))) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
