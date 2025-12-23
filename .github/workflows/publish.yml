@@ -28,7 +28,7 @@ jobs:
       build_dist: true
 
   publish:
-    needs: node
+    if: ${{ (github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
