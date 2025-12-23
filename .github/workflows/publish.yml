@@ -11,6 +11,12 @@ on:
     types:
       - closed
 
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  id-token: write
+
 jobs:
   node:
     uses: gjtorikian/actions/.github/workflows/node_package_release.yml@main

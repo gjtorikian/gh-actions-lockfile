@@ -20,7 +20,8 @@
     "lockfile",
     "security",
     "dependency-management",
-    "ci-cd"
+    "ci-cd",
+    "supply-chain-security"
   ],
   "files": [
     "dist"
