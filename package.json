@@ -21,7 +21,8 @@
     "security",
     "dependency-management",
     "ci-cd",
-    "supply-chain-security"
+    "supply-chain-security",
+    "pinning"
   ],
   "files": [
     "dist"
