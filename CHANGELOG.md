@@ -1,3 +1,7 @@
+## v1.1.2 - 2025-12-23
+
+Initial release
+
 # Changelog
 
 ## 1.1.1 (2025-12-22)
