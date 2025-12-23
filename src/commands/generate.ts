@@ -1,7 +1,7 @@
 import { join, dirname, isAbsolute } from "node:path";
 import { GitHubClient } from "../github/client.js";
 import { writeLockfile } from "../lockfile/lockfile.js";
-import { extractActionRefs, parseWorkflowDir } from "../parser/workflow.js";
+import { extractActionRefs, getFullName, isSHA, parseWorkflowDir } from "../parser/workflow.js";
 import { Resolver } from "../resolver/resolver.js";
 import { findWorkflowDir } from "../utils/directory.js";
 
@@ -9,6 +9,7 @@ interface GenerateOptions {
   workflows: string;
   output: string;
   token?: string;
+  requireSha?: boolean;
 }
 
 export async function generate(options: GenerateOptions): Promise<void> {
@@ -32,6 +33,21 @@ export async function generate(options: GenerateOptions): Promise<void> {
   }
 
   console.log(`Found ${refs.length} unique action reference(s)\n`);
+
+  // Check for SHA-only mode
+  if (options.requireSha) {
+    const nonShaRefs = refs.filter((ref) => !isSHA(ref.ref));
+
+    if (nonShaRefs.length > 0) {
+      console.error("ERROR: --require-sha is enabled but found non-SHA refs:\n");
+      for (const ref of nonShaRefs) {
+        console.error(`  ${getFullName(ref)}@${ref.ref}`);
+      }
+      console.error("\nUse full commit SHAs for maximum security.");
+      console.error("Example: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11");
+      process.exit(1);
+    }
+  }
 
   const client = new GitHubClient(options.token);
   const resolver = new Resolver(client);

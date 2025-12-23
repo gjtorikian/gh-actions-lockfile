@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll, afterAll } from "vitest";
+import { describe, expect, test, beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -9,11 +9,22 @@ import {
   parseWorkflowFile,
   parseWorkflowDir,
   extractActionRefs,
+  isSHA,
 } from "./workflow.js";
 import { copyFixture, copyFixtures } from "../__fixtures__/helpers.js";
 import type { ActionRef, Workflow } from "../types.js";
 
 describe("parseActionRef", () => {
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
   test("parses basic action ref (owner/repo@version)", () => {
     const result = parseActionRef("actions/checkout@v4");
     expect(result).toEqual({
@@ -73,6 +84,9 @@ describe("parseActionRef", () => {
   test("returns null for invalid format (no @)", () => {
     const result = parseActionRef("actions/checkout");
     expect(result).toBeNull();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      "Invalid action reference format: actions/checkout"
+    );
   });
 
   test("returns null for local action (./)", () => {
@@ -80,11 +94,17 @@ describe("parseActionRef", () => {
     // But the regex won't match it anyway
     const result = parseActionRef("./local-action");
     expect(result).toBeNull();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      "Invalid action reference format: ./local-action"
+    );
   });
 
   test("returns null for docker action", () => {
     const result = parseActionRef("docker://alpine:3.18");
     expect(result).toBeNull();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      "Invalid action reference format: docker://alpine:3.18"
+    );
   });
 });
 
@@ -147,6 +167,7 @@ describe("getRepoFullName", () => {
 
 describe("parseWorkflowFile", () => {
   let tempDir: string;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "workflow-test-"));
@@ -154,6 +175,14 @@ describe("parseWorkflowFile", () => {
 
   afterAll(async () => {
     await rm(tempDir, { recursive: true });
+  });
+
+  beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   test("parses valid workflow file", async () => {
@@ -173,6 +202,10 @@ describe("parseWorkflowFile", () => {
 
     const result = await parseWorkflowFile(workflowPath);
     expect(result).toBeNull();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to parse"),
+      expect.any(Error)
+    );
   });
 
   test("parses workflow with multiple jobs", async () => {
@@ -515,5 +548,43 @@ describe("extractActionRefs", () => {
 
     const result = extractActionRefs(workflows);
     expect(result).toEqual([]);
+  });
+});
+
+describe("isSHA", () => {
+  test("returns true for valid 40-char lowercase SHA", () => {
+    expect(isSHA("b4ffde65f46336ab88eb53be808477a3936bae11")).toBe(true);
+  });
+
+  test("returns true for valid 40-char uppercase SHA", () => {
+    expect(isSHA("B4FFDE65F46336AB88EB53BE808477A3936BAE11")).toBe(true);
+  });
+
+  test("returns true for valid 40-char mixed case SHA", () => {
+    expect(isSHA("B4fFde65F46336Ab88eB53be808477a3936Bae11")).toBe(true);
+  });
+
+  test("returns false for version tag", () => {
+    expect(isSHA("v4")).toBe(false);
+  });
+
+  test("returns false for branch name", () => {
+    expect(isSHA("main")).toBe(false);
+  });
+
+  test("returns false for short SHA (7 chars)", () => {
+    expect(isSHA("b4ffde6")).toBe(false);
+  });
+
+  test("returns false for 39-char string", () => {
+    expect(isSHA("b4ffde65f46336ab88eb53be808477a3936bae1")).toBe(false);
+  });
+
+  test("returns false for 41-char string", () => {
+    expect(isSHA("b4ffde65f46336ab88eb53be808477a3936bae111")).toBe(false);
+  });
+
+  test("returns false for non-hex characters", () => {
+    expect(isSHA("g4ffde65f46336ab88eb53be808477a3936bae11")).toBe(false);
   });
 });

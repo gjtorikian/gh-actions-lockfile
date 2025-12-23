@@ -11,6 +11,8 @@ import type { ActionRef, Workflow } from "../types.js";
 // Groups: (1) owner, (2) repo, (3) optional path, (4) ref
 const ACTION_REF_REGEX = /^([^/]+)\/([^/@]+)(?:\/([^@]+))?@(.+)$/;
 
+const SHA_REGEX = /^[a-f0-9]{40}$/i;
+
 // Returns true if the action reference should be skipped
 export function shouldSkipActionRef(uses: string): boolean {
   return uses.startsWith("./") || uses.startsWith("docker://");
@@ -105,4 +107,11 @@ export function getFullName(ref: ActionRef): string {
 
 export function getRepoFullName(ref: ActionRef): string {
   return `${ref.owner}/${ref.repo}`;
+}
+
+/**
+ * Check if a ref string is a full SHA (40-character hex string)
+ */
+export function isSHA(ref: string): boolean {
+  return SHA_REGEX.test(ref);
 }
