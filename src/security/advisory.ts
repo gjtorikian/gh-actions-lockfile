@@ -2,6 +2,7 @@ import { GitHubClient, type Advisory } from "../github/client.js";
 import type { Lockfile } from "../types.js";
 import { colors } from "../utils/colors.js";
 import { pluralize } from "../utils/pluralize.js";
+import { valid, coerce, satisfies } from "semver";
 
 export type { Advisory };
 
@@ -15,6 +16,50 @@ export interface AdvisoryResult {
   checked: number;
   actionsWithAdvisories: ActionAdvisory[];
   hasVulnerabilities: boolean;
+}
+
+/**
+ * Normalize GitHub Actions version to semver format.
+ * E.g., "v3" -> "3.0.0", "v4.1" -> "4.1.0", "abc123" (SHA) -> null
+ */
+function normalizeVersion(version: string): string | null {
+  // If it looks like a SHA (40 hex chars), we can't do version comparison
+  if (/^[a-f0-9]{40}$/i.test(version)) {
+    return null;
+  }
+
+  // Remove 'v' prefix if present
+  let normalized = version.replace(/^v/, "");
+
+  // If it's already valid semver, return it
+  if (valid(normalized)) {
+    return normalized;
+  }
+
+  // Try to coerce to semver (handles cases like "3", "3.1", etc.)
+  const coerced = coerce(normalized);
+  return coerced ? coerced.version : null;
+}
+
+/**
+ * Check if a version is affected by a vulnerability range.
+ */
+function isVersionAffected(version: string, vulnerableRange: string): boolean {
+  const normalizedVersion = normalizeVersion(version);
+  
+  // If we can't normalize the version (e.g., it's a SHA), assume it's not affected
+  // This is a safe default since SHAs are specific commits
+  if (!normalizedVersion) {
+    return false;
+  }
+
+  try {
+    return satisfies(normalizedVersion, vulnerableRange);
+  } catch (error) {
+    // If the range is invalid or can't be parsed, log and assume not affected
+    console.error(`Failed to parse vulnerability range "${vulnerableRange}":`, error);
+    return false;
+  }
 }
 
 export async function checkAdvisories(
@@ -41,11 +86,16 @@ export async function checkAdvisories(
         const advisories = await client.checkActionAdvisories(actionName);
         checked++;
 
-        if (advisories.length > 0) {
+        // Filter advisories to only include those affecting this specific version
+        const affectingAdvisories = advisories.filter((advisory) =>
+          isVersionAffected(action.version, advisory.vulnerableVersionRange)
+        );
+
+        if (affectingAdvisories.length > 0) {
           actionsWithAdvisories.push({
             action: actionName,
             version: action.version,
-            advisories,
+            advisories: affectingAdvisories,
           });
         }
       } catch (error) {
