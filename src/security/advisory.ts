@@ -44,12 +44,41 @@ function normalizeVersion(version: string): string | null {
 /**
  * Check if a version is affected by a vulnerability range.
  */
-function isVersionAffected(version: string, vulnerableRange: string): boolean {
+async function isVersionAffected(
+  version: string,
+  vulnerableRange: string,
+  client: GitHubClient,
+  actionName: string
+): Promise<boolean> {
   const normalizedVersion = normalizeVersion(version);
   
-  // If we can't normalize the version (e.g., it's a SHA), assume it's not affected
-  // This is a safe default since SHAs are specific commits
+  // If we can't normalize the version, it might be a SHA - try to resolve it
   if (!normalizedVersion) {
+    // If it looks like a SHA (40 hex chars), try to resolve to tags
+    if (/^[a-f0-9]{40}$/i.test(version)) {
+      try {
+        const [owner, repo] = actionName.split("/");
+        if (!owner || !repo) return false;
+        
+        const tags = await client.resolveTagsForSHA(owner, repo, version);
+        
+        // Check if any of the tags match the vulnerable range
+        for (const tag of tags) {
+          const tagVersion = normalizeVersion(tag);
+          if (tagVersion && satisfies(tagVersion, vulnerableRange)) {
+            return true;
+          }
+        }
+        
+        // No matching tags found or none are in the vulnerable range
+        return false;
+      } catch (error) {
+        // If we can't resolve the SHA, assume it's not affected (best-effort)
+        return false;
+      }
+    }
+    
+    // Not a SHA and can't normalize - assume not affected
     return false;
   }
 
@@ -87,9 +116,18 @@ export async function checkAdvisories(
         checked++;
 
         // Filter advisories to only include those affecting this specific version
-        const affectingAdvisories = advisories.filter((advisory) =>
-          isVersionAffected(action.version, advisory.vulnerableVersionRange)
-        );
+        const affectingAdvisories: Advisory[] = [];
+        for (const advisory of advisories) {
+          const isAffected = await isVersionAffected(
+            action.version,
+            advisory.vulnerableVersionRange,
+            client,
+            actionName
+          );
+          if (isAffected) {
+            affectingAdvisories.push(advisory);
+          }
+        }
 
         if (affectingAdvisories.length > 0) {
           actionsWithAdvisories.push({
