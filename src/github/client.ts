@@ -19,6 +19,13 @@ interface PRComment {
   body: string;
 }
 
+interface RepositoryTag {
+  name: string;
+  commit: {
+    sha: string;
+  };
+}
+
 interface GraphQLSecurityVulnerability {
   advisory: {
     ghsaId: string;
@@ -103,6 +110,19 @@ export class GitHubClient {
     const url = `${BASE_URL}/repos/${owner}/${repo}/git/refs/heads/${branch}`;
     const gitRef = await this.get<GitRef>(url);
     return gitRef.object.sha;
+  }
+
+  async resolveTagsForSHA(owner: string, repo: string, sha: string): Promise<string[]> {
+    // Fetch all tags for the repository
+    const url = `${BASE_URL}/repos/${owner}/${repo}/tags?per_page=100`;
+    const tags = await this.get<RepositoryTag[]>(url);
+
+    // Find all tags that point to this SHA
+    const matchingTags = tags
+      .filter((tag) => tag.commit.sha === sha)
+      .map((tag) => tag.name);
+
+    return matchingTags;
   }
 
   async getActionConfig(

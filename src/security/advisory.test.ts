@@ -147,6 +147,163 @@ describe("checkAdvisories", () => {
     );
   });
 
+  test("checks SHA references by resolving to tags", async () => {
+    let callCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      callCount++;
+      
+      // First call: GraphQL query for advisories
+      if (url.includes("graphql")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                securityVulnerabilities: {
+                  nodes: [
+                    {
+                      advisory: {
+                        ghsaId: "GHSA-sha-test-1234",
+                        summary: "SHA test vulnerability",
+                        severity: "HIGH",
+                        permalink: "https://github.com/advisories/GHSA-sha-test-1234",
+                      },
+                      vulnerableVersionRange: "< 4.0.0",
+                    },
+                  ],
+                },
+              },
+            }),
+            { status: 200 }
+          )
+        );
+      }
+      
+      // Second call: tags endpoint to resolve SHA
+      if (url.includes("/tags")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              {
+                name: "v3.5.2",
+                commit: {
+                  sha: "abc123def456789012345678901234567890abcd",
+                },
+              },
+              {
+                name: "v4.0.0",
+                commit: {
+                  sha: "different123456789012345678901234567890ab",
+                },
+              },
+            ]),
+            { status: 200 }
+          )
+        );
+      }
+      
+      return Promise.reject(new Error("Unexpected fetch call"));
+    }) as unknown as typeof fetch;
+
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/cache": [
+          {
+            version: "abc123def456789012345678901234567890abcd", // SHA that resolves to v3.5.2
+            sha: "abc123def456789012345678901234567890abcd",
+            integrity: "sha256-abc123",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const client = new GitHubClient("test-token");
+    const result = await checkAdvisories(lockfile, client);
+
+    expect(result.checked).toBe(1);
+    expect(result.hasVulnerabilities).toBe(true);
+    expect(result.actionsWithAdvisories).toHaveLength(1);
+    expect(result.actionsWithAdvisories[0]!.action).toBe("actions/cache");
+    expect(result.actionsWithAdvisories[0]!.advisories[0]!.ghsaId).toBe(
+      "GHSA-sha-test-1234"
+    );
+    // Should have called GraphQL API and tags endpoint
+    expect(callCount).toBe(2);
+  });
+
+  test("does not report vulnerabilities for SHA resolving to safe version", async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      // GraphQL query for advisories
+      if (url.includes("graphql")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                securityVulnerabilities: {
+                  nodes: [
+                    {
+                      advisory: {
+                        ghsaId: "GHSA-sha-safe-test",
+                        summary: "Test vulnerability",
+                        severity: "HIGH",
+                        permalink: "https://github.com/advisories/GHSA-sha-safe-test",
+                      },
+                      vulnerableVersionRange: "< 4.0.0",
+                    },
+                  ],
+                },
+              },
+            }),
+            { status: 200 }
+          )
+        );
+      }
+      
+      // Tags endpoint - SHA resolves to v4.1.0 (safe version)
+      if (url.includes("/tags")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              {
+                name: "v4.1.0",
+                commit: {
+                  sha: "def789012345678901234567890123456789abcd",
+                },
+              },
+            ]),
+            { status: 200 }
+          )
+        );
+      }
+      
+      return Promise.reject(new Error("Unexpected fetch call"));
+    }) as unknown as typeof fetch;
+
+    const lockfile: Lockfile = {
+      version: 1,
+      generated: new Date().toISOString(),
+      actions: {
+        "actions/cache": [
+          {
+            version: "def789012345678901234567890123456789abcd", // SHA that resolves to v4.1.0
+            sha: "def789012345678901234567890123456789abcd",
+            integrity: "sha256-def789",
+            dependencies: [],
+          },
+        ],
+      },
+    };
+
+    const client = new GitHubClient("test-token");
+    const result = await checkAdvisories(lockfile, client);
+
+    expect(result.checked).toBe(1);
+    expect(result.hasVulnerabilities).toBe(false);
+    expect(result.actionsWithAdvisories).toHaveLength(0);
+  });
+
   test("continues on API errors", async () => {
     globalThis.fetch = vi
       .fn()
