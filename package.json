@@ -54,7 +54,7 @@
     "docs:preview": "npm run --workspace=gh-actions-lockfile-website preview"
   },
   "dependencies": {
-    "@actions/core": "^2.0.1",
+    "@actions/core": "^3.0.0",
     "cleye": "^2.1.1",
     "p-limit": "^7.2.0",
     "picocolors": "^1.1.1",
