@@ -1,3 +1,20 @@
+## v1.2.1 - 2026-04-29
+
+## What's Changed
+* Bump the npm-dependencies group with 6 updates by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/35
+* Check action versions against vulnerable range by @johannespostler in https://github.com/gjtorikian/gh-actions-lockfile/pull/39
+* Bump the npm-dependencies group across 1 directory with 11 updates by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/40
+* Bump the npm-dependencies group with 7 updates by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/41
+* bump actions/deploy-pages from 4 to 5 by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/43
+* Bump actions/configure-pages from 5 to 6 by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/42
+* Bump actions/upload-pages-artifact from 4 to 5 by @dependabot[bot] in https://github.com/gjtorikian/gh-actions-lockfile/pull/45
+* chore: release 1.2.1 to ship advisory version-range filter by @gjtorikian in https://github.com/gjtorikian/gh-actions-lockfile/pull/47
+
+## New Contributors
+* @johannespostler made their first contribution in https://github.com/gjtorikian/gh-actions-lockfile/pull/39
+
+**Full Changelog**: https://github.com/gjtorikian/gh-actions-lockfile/compare/v1.2.0...v1.2.1
+
 ## v1.2.0 - 2025-12-23
 
 ## What's Changed
