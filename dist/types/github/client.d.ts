@@ -22,6 +22,7 @@ export declare class GitHubClient {
     resolveRef(owner: string, repo: string, ref: string): Promise<string>;
     private resolveTag;
     private resolveBranch;
+    resolveTagsForSHA(owner: string, repo: string, sha: string): Promise<string[]>;
     getActionConfig(owner: string, repo: string, sha: string, path?: string): Promise<ActionConfig | null>;
     getArchiveSHA256(owner: string, repo: string, sha: string): Promise<string>;
     private get;
