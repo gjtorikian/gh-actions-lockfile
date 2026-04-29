@@ -30,11 +30,20 @@ jobs:
   publish:
     if: ${{ (github.event.pull_request.merged == true) && (contains(github.event.pull_request.labels.*.name, 'release')) }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: gjtorikian/actions/setup-languages/node@main
+
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          node --version
+          npm --version
 
       - name: Build and publish to npm
         run: |
